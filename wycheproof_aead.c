@@ -151,11 +151,12 @@ int
 main(int argc, char *argv[])
 {
 	const struct lc_aead_impl	*impl;
-	uint8_t		*aad, *ct, *iv, *key, *msg, *tag, *out;
+	uint8_t		*aad, *ct, *iv, *key, *msg, *tag, *encout, *decout,
+			    *buf;
 	const char	*errstr;
 	size_t		 aadlen, ctlen, ivlen, keylen, msglen, taglen;
 	size_t		 ivlenarg, keylenarg, taglenarg;
-	size_t		 l, outlen;
+	size_t		 l, encoutlen, decoutlen;
 	int		 aflag, cflag, Iflag, iflag, Kflag, kflag, mflag,
 			    Tflag, tflag;
 	int		 ch;
@@ -279,46 +280,81 @@ main(int argc, char *argv[])
 	    Tflag && tflag))
 		errx(1, "missing required arguments");
 
-	if (!lc_aead_seal(impl, key, keylenarg, iv, ivlenarg, NULL, &outlen,
+	/* Encryption. */
+
+	if (!lc_aead_seal(impl, key, keylenarg, iv, ivlenarg, NULL, &encoutlen,
 	    aad, aadlen, msg, msglen)) {
 		puts("invalid");
 		return 1;
 	}
-
-	out = malloc(outlen);
-	if (out == NULL)
+	encout = malloc(encoutlen);
+	if (encout == NULL)
 		err(1, "out of memory");
-
-	if (!lc_aead_seal(impl, key, keylenarg, iv, ivlenarg, out, &outlen,
-	    aad, aadlen, msg, msglen)) {
+	if (!lc_aead_seal(impl, key, keylenarg, iv, ivlenarg, encout,
+	    &encoutlen, aad, aadlen, msg, msglen)) {
 		puts("invalid");
 		return 1;
 	}
 
-	if (ctlen != outlen - LC_POLY1305_TAGLEN ||
-	    lc_ct_cmp(out, ct, ctlen) != 0) {
+	if (ctlen != encoutlen - LC_POLY1305_TAGLEN ||
+	    lc_ct_cmp(encout, ct, ctlen) != 0) {
 		fprintf(stderr, "ct (%zu, %zu)\n", ctlen,
-		    outlen - LC_POLY1305_TAGLEN);
+		    encoutlen - LC_POLY1305_TAGLEN);
 		hexdump(stderr, msg, msglen);
 		fprintf(stderr, "\n");
 		hexdump(stderr, ct, ctlen);
 		fprintf(stderr, "\n");
-		hexdump(stderr, out, outlen - LC_POLY1305_TAGLEN);
+		hexdump(stderr, encout, encoutlen - LC_POLY1305_TAGLEN);
 		fprintf(stderr, "\n");
 		puts("invalid");
 		return 1;
 	}
 	if (taglenarg != LC_POLY1305_TAGLEN ||
-	    lc_ct_cmp(out + ctlen, tag, LC_POLY1305_TAGLEN) != 0) {
+	    lc_ct_cmp(encout + ctlen, tag, LC_POLY1305_TAGLEN) != 0) {
 		fprintf(stderr, "tag (%zu, %zu)\n", taglenarg,
 		    (size_t)LC_POLY1305_TAGLEN);
 		hexdump(stderr, tag, taglen);
 		fprintf(stderr, "\n");
-		hexdump(stderr, out + ctlen, LC_POLY1305_TAGLEN);
+		hexdump(stderr, encout + ctlen, LC_POLY1305_TAGLEN);
 		fprintf(stderr, "\n");
 		puts("invalid");
 		return 1;
 	}
+
+	/* Decryption. */
+
+	buf = malloc(msglen + taglen);
+	if (buf == NULL)
+		err(1, "out of memory");
+	memcpy(buf, ct, ctlen);
+	memcpy(buf + ctlen, tag, taglen);
+
+	if (!lc_aead_open(impl, key, keylenarg, iv, ivlenarg, NULL, &decoutlen,
+	    aad, aadlen, buf, ctlen + taglen)) {
+		puts("invalid");
+		return 1;
+	}
+	decout = malloc(decoutlen);
+	if (encout == NULL)
+		err(1, "out of memory");
+	if (!lc_aead_open(impl, key, keylenarg, iv, ivlenarg, decout,
+	    &decoutlen, aad, aadlen, buf, ctlen + taglen)) {
+		puts("invalid");
+		return 1;
+	}
+
+	if (msglen != decoutlen || lc_ct_cmp(decout, msg, msglen) != 0) {
+		fprintf(stderr, "ct (%zu, %zu)\n", msglen, decoutlen);
+		hexdump(stderr, msg, msglen);
+		fprintf(stderr, "\n");
+		hexdump(stderr, ct, ctlen);
+		fprintf(stderr, "\n");
+		hexdump(stderr, decout, decoutlen);
+		fprintf(stderr, "\n");
+		puts("invalid");
+		return 1;
+	}
+	/* Tag isn't checked, as it's already validated by lc_aead_open. */
 
 	puts("valid");
 	return 0;
