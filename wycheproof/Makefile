@@ -18,7 +18,7 @@ tests-aead:
 	@echo Undefined WYCHEPROOF_DIR; false
 .endif
 .for p in ${AEAD}
-	perl ${.CURDIR}/aead.pl -x ./${p} \
+	perl ${.CURDIR}/aead.pl ${TESTOPTS} -x ./${p} \
 	    ${WYCHEPROOF_DIR}/testvectors/chacha20_poly1305_test.json \
 	    ${WYCHEPROOF_DIR}/testvectors_v1/chacha20_poly1305_test.json
 .endfor

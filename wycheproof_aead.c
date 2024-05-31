@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 	size_t		 l, encoutlen, decoutlen;
 	int		 aflag, cflag, Iflag, iflag, Kflag, kflag, mflag,
 			    Tflag, tflag;
-	int		 ch;
+	int		 ch, verbose;
 
 	if (argc < 2)
 		usage();
@@ -171,7 +171,8 @@ main(int argc, char *argv[])
 	optind = 2;
 	aflag = cflag = Iflag = iflag = Kflag = kflag = mflag = Tflag = tflag =
 	    0;
-	while ((ch = getopt(argc, argv, "a:c:I:i:K:k:m:T:t:")) != -1) {
+	verbose = 0;
+	while ((ch = getopt(argc, argv, "a:c:I:i:K:k:m:T:t:v")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -268,6 +269,9 @@ main(int argc, char *argv[])
 			if (!hexparse(optarg, tag, &l) || l != taglen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
+		case 'v':
+			verbose = 1;
+			break;
 		default:
 			usage();
 			break;
@@ -298,25 +302,30 @@ main(int argc, char *argv[])
 
 	if (ctlen != encoutlen - LC_POLY1305_TAGLEN ||
 	    lc_ct_cmp(encout, ct, ctlen) != 0) {
-		fprintf(stderr, "ct (%zu, %zu)\n", ctlen,
-		    encoutlen - LC_POLY1305_TAGLEN);
-		hexdump(stderr, msg, msglen);
-		fprintf(stderr, "\n");
-		hexdump(stderr, ct, ctlen);
-		fprintf(stderr, "\n");
-		hexdump(stderr, encout, encoutlen - LC_POLY1305_TAGLEN);
-		fprintf(stderr, "\n");
+		if (verbose) {
+			fprintf(stderr, "ct (%zu, %zu)\n", ctlen,
+			    encoutlen - LC_POLY1305_TAGLEN);
+			hexdump(stderr, msg, msglen);
+			fprintf(stderr, "\n");
+			hexdump(stderr, ct, ctlen);
+			fprintf(stderr, "\n");
+			hexdump(stderr, encout,
+			    encoutlen - LC_POLY1305_TAGLEN);
+			fprintf(stderr, "\n");
+		}
 		puts("invalid");
 		return 1;
 	}
 	if (taglenarg != LC_POLY1305_TAGLEN ||
 	    lc_ct_cmp(encout + ctlen, tag, LC_POLY1305_TAGLEN) != 0) {
-		fprintf(stderr, "tag (%zu, %zu)\n", taglenarg,
-		    (size_t)LC_POLY1305_TAGLEN);
-		hexdump(stderr, tag, taglen);
-		fprintf(stderr, "\n");
-		hexdump(stderr, encout + ctlen, LC_POLY1305_TAGLEN);
-		fprintf(stderr, "\n");
+		if (verbose) {
+			fprintf(stderr, "tag (%zu, %zu)\n", taglenarg,
+			    (size_t)LC_POLY1305_TAGLEN);
+			hexdump(stderr, tag, taglen);
+			fprintf(stderr, "\n");
+			hexdump(stderr, encout + ctlen, LC_POLY1305_TAGLEN);
+			fprintf(stderr, "\n");
+		}
 		puts("invalid");
 		return 1;
 	}
@@ -344,13 +353,15 @@ main(int argc, char *argv[])
 	}
 
 	if (msglen != decoutlen || lc_ct_cmp(decout, msg, msglen) != 0) {
-		fprintf(stderr, "ct (%zu, %zu)\n", msglen, decoutlen);
-		hexdump(stderr, msg, msglen);
-		fprintf(stderr, "\n");
-		hexdump(stderr, ct, ctlen);
-		fprintf(stderr, "\n");
-		hexdump(stderr, decout, decoutlen);
-		fprintf(stderr, "\n");
+		if (verbose) {
+			fprintf(stderr, "ct (%zu, %zu)\n", msglen, decoutlen);
+			hexdump(stderr, msg, msglen);
+			fprintf(stderr, "\n");
+			hexdump(stderr, ct, ctlen);
+			fprintf(stderr, "\n");
+			hexdump(stderr, decout, decoutlen);
+			fprintf(stderr, "\n");
+		}
 		puts("invalid");
 		return 1;
 	}

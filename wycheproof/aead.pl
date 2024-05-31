@@ -21,7 +21,7 @@ sub main ()
 	my %opts;
 	my $rc = 0;
 
-	getopts("x:", \%opts) && @ARGV > 0 or usage;
+	getopts("vx:", \%opts) && @ARGV > 0 or usage;
 	usage unless defined $opts{"x"};
 
 	for my $f (@ARGV) {
@@ -42,6 +42,7 @@ sub main ()
 				push(@args, "-m", $test->{msg});
 				push(@args, "-T", $testgroup->{tagSize});
 				push(@args, "-t", $test->{tag});
+				push(@args, "-v") if $opts{"v"};
 
 				open(my $th, "-|", $opts{"x"}, @args) or die;
 				my $result = slurp($th);
