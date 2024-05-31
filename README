@@ -1,0 +1,79 @@
+lilcrypto
+=========
+
+> They see me rollin', they hatin'.
+
+Experiment on rolling my own crypto. Kinda. I'm not creating any new
+protocol, but implementing known algorithms and constructions. The main
+focus is to understand how to implement the math behind the algorithms,
+and to get to know the constructions better.
+
+Algorithms
+==========
+
+Utilities
+---------
+
+- Constant-time operations
+  - [/] compare: returns `0` if match, non-`0` otherwise. The non-`0`
+    case might leak information. Would be better to return `0xffffffff`
+    if match, `0` otherwise.
+
+Authentication
+--------------
+
+- [x] Poly1305
+- [ ] SHA-512 (needed for Ed25519)
+
+Ciphers
+-------
+
+- [x] ChaCha20
+- [ ] XChaCha20
+
+AEAD
+----
+
+- [/] ChaCha20-Poly1305 (missing aead_open)
+- [ ] XChaCha20-Poly1305
+
+ECC
+---
+
+- Curve25519
+  - [ ] Ed25519 (EdDSA)
+  - [ ] X25519 (ECDH)
+
+Nice-to-haves
+=============
+
+Utilities
+---------
+
+- [ ] Portable Makefile
+- [ ] NaCl interface
+- [ ] signify interface
+
+Authentication
+--------------
+
+- [ ] GMAC
+
+Ciphers
+-------
+
+- [ ] AES
+- [ ] Camellia
+- [ ] Salsa20 (no Wycheproof test vector suite)
+- [ ] XSalsa20 (no Wycheproof test vector suite)
+
+AEAD
+----
+
+- [ ] AES-GCM
+- [ ] Camellia-GCM
+- [ ] Salsa20-Poly1305 (no Wycherproof test vector suite)
+- [ ] XSalsa20-Poly1305 (no Wycherproof test vector suite)
+
+KDF?
+----
