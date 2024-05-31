@@ -104,3 +104,10 @@ int	lc_aead_open(const struct lc_aead_impl *, const uint8_t *, size_t,
     const uint8_t *, size_t);
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
+
+
+/*
+ * Utilities.
+ */
+
+void	lc_scrub(void *, size_t);

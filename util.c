@@ -16,7 +16,7 @@
 
 #include <string.h>
 
-#include "util.h"
+#include "lilcrypto.h"
 
 
 void

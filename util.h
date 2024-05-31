@@ -22,13 +22,6 @@
 
 
 /*
- * External definitions.
- */
-
-void	lc_scrub(void *, size_t);
-
-
-/*
  * Endianness.
  */
 
