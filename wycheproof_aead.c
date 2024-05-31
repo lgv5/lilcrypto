@@ -201,6 +201,7 @@ main(int argc, char *argv[])
 			ivlenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "ivlen is %s: %s", errstr, optarg);
+			ivlenarg /= 8;
 			break;
 		case 'i':
 			iflag = 1;
@@ -221,6 +222,7 @@ main(int argc, char *argv[])
 				errx(1, "keylen is %s: %s", errstr, optarg);
 			if (keylenarg % 8 != 0)
 				errx(1, "unsupport K value: %zu", keylenarg);
+			keylenarg /= 8;
 			break;
 		case 'k':
 			kflag = 1;
@@ -251,6 +253,7 @@ main(int argc, char *argv[])
 			taglenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "taglen is %s: %s", errstr, optarg);
+			taglenarg /= 8;
 			break;
 		case 't':
 			tflag = 1;
@@ -281,10 +284,6 @@ main(int argc, char *argv[])
 		puts("invalid");
 		return 1;
 	}
-
-	ivlenarg /= 8;
-	keylenarg /= 8;
-	taglenarg /= 8;
 
 	out = malloc(outlen);
 	if (out == NULL)
