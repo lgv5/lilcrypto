@@ -34,7 +34,7 @@ Ciphers
 AEAD
 ----
 
-- [/] ChaCha20-Poly1305 (missing aead_open)
+- [x] ChaCha20-Poly1305
 - [ ] XChaCha20-Poly1305
 
 ECC
