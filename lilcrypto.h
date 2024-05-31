@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 
 /*
@@ -110,4 +111,5 @@ const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
  * Utilities.
  */
 
+int	lc_hexdump_fp(FILE *, const void *, size_t);
 void	lc_scrub(void *, size_t);

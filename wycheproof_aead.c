@@ -60,58 +60,6 @@ hexparse(const char *s, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
-static void
-hexdump(FILE *fp, const uint8_t *blob, size_t len)
-{
-	size_t	i, off;
-	int	pad;
-
-	for (i = 0; len > (1 << (8 * i)); i++)
-		;
-	pad = (i + 1) * 2;
-
-	off = 0;
-	while (len >= 16) {
-		fprintf(fp, "%0*zx\t", pad, off);
-
-		for (i = 0; i < 8; i++)
-			fprintf(fp, "%02x ", blob[i]);
-		for (; i < 16; i++)
-			fprintf(fp, " %02x", blob[i]);
-
-		fprintf(fp, "\t|");
-		for (i = 0; i < 16; i++)
-			fprintf(fp, "%c", isprint(blob[i]) ? blob[i] : '.');
-		fprintf(fp, "|\n");
-
-		blob += 16;
-		off += 16;
-		len -= 16;
-	}
-
-	if (len == 0)
-		goto out;
-
-	fprintf(fp, "%0*zx\t", pad, off);
-	for (i = 0; i < len && i < 8; i++)
-		fprintf(fp, "%02x ", blob[i]);
-	for (; i < 8; i++)
-		fprintf(fp, "   ");
-	for (; i < len && i < 16; i++)
-		fprintf(fp, " %02x", blob[i]);
-	for (; i < 16; i++)
-		fprintf(fp, "   ");
-
-	fprintf(fp, "\t|");
-	for (i = 0; i < len; i++)
-		fprintf(fp, "%c", isprint(blob[i]) ? blob[i] : '.');
-	fprintf(fp, "|\n");
-
- out:
-	fprintf(fp, "%0*zx\n", pad, off + len);
-	fflush(fp);
-}
-
 struct kwimpl {
 	const char			*kw;
 	const struct lc_aead_impl	*(*impl)(void);
@@ -305,11 +253,11 @@ main(int argc, char *argv[])
 		if (verbose) {
 			fprintf(stderr, "ct (%zu, %zu)\n", ctlen,
 			    encoutlen - LC_POLY1305_TAGLEN);
-			hexdump(stderr, msg, msglen);
+			lc_hexdump_fp(stderr, msg, msglen);
 			fprintf(stderr, "\n");
-			hexdump(stderr, ct, ctlen);
+			lc_hexdump_fp(stderr, ct, ctlen);
 			fprintf(stderr, "\n");
-			hexdump(stderr, encout,
+			lc_hexdump_fp(stderr, encout,
 			    encoutlen - LC_POLY1305_TAGLEN);
 			fprintf(stderr, "\n");
 		}
@@ -321,9 +269,9 @@ main(int argc, char *argv[])
 		if (verbose) {
 			fprintf(stderr, "tag (%zu, %zu)\n", taglenarg,
 			    (size_t)LC_POLY1305_TAGLEN);
-			hexdump(stderr, tag, taglen);
+			lc_hexdump_fp(stderr, tag, taglen);
 			fprintf(stderr, "\n");
-			hexdump(stderr, encout + ctlen, LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, encout + ctlen, LC_POLY1305_TAGLEN);
 			fprintf(stderr, "\n");
 		}
 		puts("invalid");
@@ -355,11 +303,11 @@ main(int argc, char *argv[])
 	if (msglen != decoutlen || lc_ct_cmp(decout, msg, msglen) != 0) {
 		if (verbose) {
 			fprintf(stderr, "ct (%zu, %zu)\n", msglen, decoutlen);
-			hexdump(stderr, msg, msglen);
+			lc_hexdump_fp(stderr, msg, msglen);
 			fprintf(stderr, "\n");
-			hexdump(stderr, ct, ctlen);
+			lc_hexdump_fp(stderr, ct, ctlen);
 			fprintf(stderr, "\n");
-			hexdump(stderr, decout, decoutlen);
+			lc_hexdump_fp(stderr, decout, decoutlen);
 			fprintf(stderr, "\n");
 		}
 		puts("invalid");
