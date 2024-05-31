@@ -7,6 +7,7 @@ NOMAN=	noman
 
 SRCS_wycheproof_aead=	wycheproof_aead.c
 
+DPADD+=	${.CURDIR}/../lib/obj/liblilcrypto.a
 LDADD+=	${.CURDIR}/../lib/obj/liblilcrypto.a
 
 
