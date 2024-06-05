@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
+
 #include "lilcrypto.h"
 #include "auth.h"
 #include "auth_poly1305.h"
@@ -151,6 +153,11 @@ poly1305_auth(const uint8_t *key, size_t keylen, uint8_t *out, size_t *outlen,
 	    poly1305_final(&ctx, out, outlen);
 }
 
+static void *
+poly1305_ctx_new(const void *arg)
+{
+	return malloc(sizeof(struct poly1305_ctx));
+}
 
 static struct lc_auth_impl	poly1305_impl = {
 	.init = &poly1305_init,
@@ -158,7 +165,8 @@ static struct lc_auth_impl	poly1305_impl = {
 	.final = &poly1305_final,
 	.auth = &poly1305_auth,
 
-	.argsz = sizeof(struct poly1305_ctx),
+	.ctx_new = &poly1305_ctx_new,
+	.ctx_free = NULL,
 };
 
 const struct lc_auth_impl *

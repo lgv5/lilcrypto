@@ -15,6 +15,7 @@
  */
 
 #include <limits.h>
+#include <stdlib.h>
 
 #include "lilcrypto.h"
 #include "cipher.h"
@@ -177,6 +178,12 @@ chacha20_x(const uint8_t *key, size_t keylen, const uint8_t *iv, size_t ivlen,
 	return rc;
 }
 
+static void *
+chacha20_ctx_new(const void *arg)
+{
+	return malloc(sizeof(struct chacha20_ctx));
+}
+
 
 static struct lc_cipher_impl	chacha20_impl = {
 	.encrypt_init = &chacha20_x_init,
@@ -189,7 +196,8 @@ static struct lc_cipher_impl	chacha20_impl = {
 	.decrypt_final = &chacha20_x_final,
 	.decrypt = &chacha20_x,
 
-	.argsz = sizeof(struct chacha20_ctx),
+	.ctx_new = &chacha20_ctx_new,
+	.ctx_free = NULL,
 };
 
 const struct lc_cipher_impl *

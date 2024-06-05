@@ -19,23 +19,24 @@
 
 
 struct lc_cipher_impl {
-	int	(*encrypt_init)(void *, const uint8_t *, size_t,
+	int	 (*encrypt_init)(void *, const uint8_t *, size_t,
 		    const uint8_t *, size_t);
-	int	(*encrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
+	int	 (*encrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
 		    size_t);
-	int	(*encrypt_final)(void *, uint8_t *, size_t *);
-	int	(*encrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
+	int	 (*encrypt_final)(void *, uint8_t *, size_t *);
+	int	 (*encrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
 		    uint8_t *, size_t *, const uint8_t *, size_t);
 
-	int	(*decrypt_init)(void *, const uint8_t *, size_t,
+	int	 (*decrypt_init)(void *, const uint8_t *, size_t,
 		    const uint8_t *, size_t);
-	int	(*decrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
+	int	 (*decrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
 		    size_t);
-	int	(*decrypt_final)(void *, uint8_t *, size_t *);
-	int	(*decrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
+	int	 (*decrypt_final)(void *, uint8_t *, size_t *);
+	int	 (*decrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
 		    uint8_t *, size_t *, const uint8_t *, size_t);
 
-	size_t	  argsz;
+	void	*(*ctx_new)(const void *);
+	void	 (*ctx_free)(void *);
 };
 
 struct lc_cipher_ctx {

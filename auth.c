@@ -50,18 +50,16 @@ struct lc_auth_ctx *
 lc_auth_ctx_new(const struct lc_auth_impl *impl)
 {
 	struct lc_auth_ctx	*ctx;
-	void			*arg;
 
 	ctx = malloc(sizeof(*ctx));
 	if (ctx == NULL)
 		return NULL;
-	if (impl->argsz > 0) {
-		arg = malloc(impl->argsz);
-		if (arg == NULL) {
+	if (impl->ctx_new != NULL) {
+		ctx->arg = impl->ctx_new(NULL);
+		if (ctx->arg == NULL) {
 			free(ctx);
 			return NULL;
 		}
-		ctx->arg = arg;
 	} else
 		ctx->arg = NULL;
 	ctx->impl = impl;
@@ -72,7 +70,11 @@ lc_auth_ctx_new(const struct lc_auth_impl *impl)
 void
 lc_auth_ctx_free(struct lc_auth_ctx *ctx)
 {
-	if (ctx != NULL)
-		free(ctx->arg);
-	free(ctx);
+	if (ctx != NULL && ctx->impl != NULL && ctx->impl->ctx_free != NULL)
+		ctx->impl->ctx_free(ctx);
+	else {
+		if (ctx != NULL)
+			free(ctx->arg);
+		free(ctx);
+	}
 }
