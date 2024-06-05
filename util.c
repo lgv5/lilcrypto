@@ -105,6 +105,7 @@ lc_hexdump_fp(FILE *fp, const void *blob, size_t len)
 		l = hexdump_line(buf, p, len, off, pad);
 		if (fputs(buf, fp) == EOF)
 			return 0;
+		p += l;
 		off += l;
 		len -= l;
 	}
