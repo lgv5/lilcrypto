@@ -12,7 +12,8 @@ sub slurp ($fh) { local $/; <$fh> }
 
 sub usage ()
 {
-	say STDERR "Usage: $progname -x runner json_file [json_files ...]";
+	say STDERR "Usage: $progname [-Fv] -x runner json_file ",
+	    "[json_files ...]";
 	exit 1;
 }
 
@@ -21,7 +22,7 @@ sub main ()
 	my %opts;
 	my $rc = 0;
 
-	getopts("vx:", \%opts) && @ARGV > 0 or usage;
+	getopts("Fvx:", \%opts) && @ARGV > 0 or usage;
 	usage unless defined $opts{"x"};
 
 	for my $f (@ARGV) {
@@ -52,6 +53,7 @@ sub main ()
 					    "$test->{comment} [",
 					    join(",", $test->{flags}->@*),
 					    "]";
+					exit 1 if $opts{"F"};
 				}
 			}
 		}
