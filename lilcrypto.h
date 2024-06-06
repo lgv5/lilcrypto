@@ -23,6 +23,10 @@
  * Constants.
  */
 
+/* Hashes. */
+#define LC_SHA384_HASHLEN	48
+#define LC_SHA512_HASHLEN	64
+
 /* Authentitcation. */
 #define LC_POLY1305_KEYLEN	32
 #define LC_POLY1305_TAGLEN	16
@@ -40,7 +44,28 @@ uint32_t	lc_ct_cmp(const uint8_t *, const uint8_t *, size_t);
 
 
 /*
- * Message authentication code.
+ * Hashes.
+ */
+
+struct lc_hash_ctx;
+struct lc_hash_impl;
+
+
+int	lc_hash_init(struct lc_hash_ctx *);
+int	lc_hash_update(struct lc_hash_ctx *, const uint8_t *, size_t);
+int	lc_hash_final(struct lc_hash_ctx *, uint8_t *, size_t *);
+int	lc_hash(const struct lc_hash_impl *, uint8_t *, size_t *,
+	    const uint8_t *, size_t);
+
+struct lc_hash_ctx	*lc_hash_ctx_new(const struct lc_hash_impl *);
+void			 lc_hash_ctx_free(struct lc_hash_ctx *);
+
+const struct lc_hash_impl	*lc_hash_impl_sha384(void);
+const struct lc_hash_impl	*lc_hash_impl_sha512(void);
+
+
+/*
+ * Authentication.
  */
 
 struct lc_auth_ctx;

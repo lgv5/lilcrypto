@@ -72,6 +72,53 @@ store64le(uint8_t *x, uint64_t v)
 	x[7] = v >> 56;
 }
 
+static inline uint16_t
+load16be(const uint8_t *x)
+{
+	return (x[0] << 8) | x[1];
+}
+
+static inline uint32_t
+load32be(const uint8_t *x)
+{
+	return (x[0] << 24) | (x[1] << 16) | (x[2] << 8) | x[3];
+}
+
+static inline uint64_t
+load64be(const uint8_t *x)
+{
+	return ((uint64_t)load32be(x) << 32) | load32be(x + 4);
+}
+
+static inline void
+store16be(uint8_t *x, uint64_t v)
+{
+	x[0] = v >> 8;
+	x[1] = v & 0xff;
+}
+
+static inline void
+store32be(uint8_t *x, uint32_t v)
+{
+	x[0] = v >> 24;
+	x[1] = (v >> 16) & 0xff;
+	x[2] = (v >> 8) & 0xff;
+	x[3] = v & 0xff;
+}
+
+static inline void
+store64be(uint8_t *x, uint64_t v)
+{
+	x[0] = v >> 56;
+	x[1] = (v >> 48) & 0xff;
+	x[2] = (v >> 40) & 0xff;
+	x[3] = (v >> 32) & 0xff;
+	x[4] = (v >> 24) & 0xff;
+	x[5] = (v >> 16) & 0xff;
+	x[6] = (v >> 8) & 0xff;
+	x[7] = v & 0xff;
+}
+
 
 /*
  * rotr and rotl.
@@ -92,11 +139,11 @@ rotl64(uint64_t x, uint64_t r)
 static inline uint32_t
 rotr32(uint32_t x, uint32_t r)
 {
-	return rotl32(x, 32 - r);
+	return (x >> r) | (x << (32 - r));
 }
 
 static inline uint64_t
 rotr64(uint64_t x, uint64_t r)
 {
-	return rotl64(x, 64 - r);
+	return (x >> r) | (x << (64 - r));
 }

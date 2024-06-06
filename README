@@ -19,11 +19,16 @@ Utilities
     case might leak information. Would be better to return `0xffffffff`
     if match, `0` otherwise.
 
+Hash
+----
+
+- [x] SHA-384
+- [x] SHA-512 (needed for Ed25519)
+
 Authentication
 --------------
 
 - [x] Poly1305
-- [ ] SHA-512 (needed for Ed25519)
 
 Ciphers
 -------
@@ -53,6 +58,12 @@ Utilities
 - [ ] Portable Makefile
 - [ ] NaCl interface
 - [ ] signify interface
+
+Hash
+----
+
+- [ ] SHA-256 & SHA-224 (the latter is a truncated form of the former)
+- [ ] SHA-512/224 & SHA-512/256 (most of the work done)
 
 Authentication
 --------------
