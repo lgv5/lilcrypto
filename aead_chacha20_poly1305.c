@@ -162,7 +162,7 @@ chacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
 	    !poly1305_final(&pctx, tag, &olen))
 		return 0;
 
-	if (lc_ct_cmp(tag, tagp, LC_POLY1305_TAGLEN) != 0)
+	if (!lc_ct_cmp(tag, tagp, LC_POLY1305_TAGLEN))
 		return 0;
 
 	lc_scrub(buf, sizeof(buf));

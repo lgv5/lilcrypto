@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	 * be the full-length hash.
 	 */
 	if (taglen != taglenarg ||
-	    lc_ct_cmp(buf, tag, taglen) != 0) {
+	    !lc_ct_cmp(buf, tag, taglen)) {
 		if (verbose) {
 			fprintf(stderr, "tag (%zu, %zu, %zu)\n", taglen,
 			    taglenarg, olen);

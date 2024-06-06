@@ -15,9 +15,7 @@ Utilities
 ---------
 
 - Constant-time operations
-  - [/] compare: returns `0` if match, non-`0` otherwise. The non-`0`
-    case might leak information. Would be better to return `0xffffffff`
-    if match, `0` otherwise.
+  - [x] compare
 
 Hash
 ----

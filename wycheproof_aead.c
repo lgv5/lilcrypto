@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 	}
 
 	if (ctlen != encoutlen - LC_POLY1305_TAGLEN ||
-	    lc_ct_cmp(encout, ct, ctlen) != 0) {
+	    !lc_ct_cmp(encout, ct, ctlen)) {
 		if (verbose) {
 			fprintf(stderr, "ct (%zu, %zu)\n", ctlen,
 			    encoutlen - LC_POLY1305_TAGLEN);
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 	if (taglenarg != LC_POLY1305_TAGLEN ||
-	    lc_ct_cmp(encout + ctlen, tag, LC_POLY1305_TAGLEN) != 0) {
+	    !lc_ct_cmp(encout + ctlen, tag, LC_POLY1305_TAGLEN)) {
 		if (verbose) {
 			fprintf(stderr, "tag (%zu, %zu)\n", taglenarg,
 			    (size_t)LC_POLY1305_TAGLEN);
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (msglen != decoutlen || lc_ct_cmp(decout, msg, msglen) != 0) {
+	if (msglen != decoutlen || !lc_ct_cmp(decout, msg, msglen)) {
 		if (verbose) {
 			fprintf(stderr, "ct (%zu, %zu)\n", msglen, decoutlen);
 			lc_hexdump_fp(stderr, msg, msglen);
