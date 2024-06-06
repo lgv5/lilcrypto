@@ -59,9 +59,10 @@ hexdump_line(char *buf, const uint8_t *blob, size_t len, size_t off, int pad)
 			buflen -= w;
 		}
 		if (i < 8) {
-			memset(bufp, ' ', 3 * (16 - i));
-			bufp += 3 * (16 - i);
-			buflen -= 3 * (16 - i);
+			memset(bufp, ' ', 3 * (8 - i));
+			bufp += 3 * (8 - i);
+			buflen -= 3 * (8 - i);
+			i = 8;
 		}
 		for (; i < len && i < 16; i++) {
 			w = snprintf(bufp, buflen, " %02x", blob[i]);
