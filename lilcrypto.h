@@ -82,6 +82,8 @@ struct lc_auth_ctx	*lc_auth_ctx_new(const struct lc_auth_impl *);
 void			 lc_auth_ctx_free(struct lc_auth_ctx *);
 
 const struct lc_auth_impl	*lc_auth_impl_poly1305(void);
+const struct lc_auth_impl	*lc_auth_impl_hmac_sha384(void);
+const struct lc_auth_impl	*lc_auth_impl_hmac_sha512(void);
 
 
 /*

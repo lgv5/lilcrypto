@@ -28,6 +28,7 @@ Hash
 Authentication
 --------------
 
+- [x] HMAC
 - [x] Poly1305
 
 Ciphers
@@ -86,5 +87,7 @@ AEAD
 - [ ] Salsa20-Poly1305 (no Wycherproof test vector suite)
 - [ ] XSalsa20-Poly1305 (no Wycherproof test vector suite)
 
-KDF?
-----
+KDF
+---
+
+- [ ] HKDF
