@@ -42,12 +42,13 @@ hmac_common_init(void *arg, const uint8_t *key, size_t keylen)
 		    !lc_hash_update(ctx->hctx, key, keylen) ||
 		    !lc_hash_final(ctx->hctx, ctx->key, &olen))
 			return 0;
-	} else {
+		keylen = olen;
+	} else
 		for (i = 0; i < keylen; i++)
 			ctx->key[i] = key[i];
-		for (; i < ctx->blocksz; i++)
-			ctx->key[i] = 0;
-	}
+
+	for (i = keylen; i < ctx->blocksz; i++)
+		ctx->key[i] = 0;
 
 	for (i = 0; i < ctx->blocksz; i++)
 		ikeypad[i] = ctx->key[i] ^ HMAC_IPAD;
