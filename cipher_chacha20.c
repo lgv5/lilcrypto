@@ -179,7 +179,7 @@ chacha20_x(const uint8_t *key, size_t keylen, const uint8_t *iv, size_t ivlen,
 }
 
 static void *
-chacha20_ctx_new(const void *arg)
+chacha20_ctx_new(void)
 {
 	return malloc(sizeof(struct chacha20_ctx));
 }

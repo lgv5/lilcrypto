@@ -35,7 +35,7 @@ struct lc_cipher_impl {
 	int	 (*decrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
 		    uint8_t *, size_t *, const uint8_t *, size_t);
 
-	void	*(*ctx_new)(const void *);
+	void	*(*ctx_new)(void);
 	void	 (*ctx_free)(void *);
 };
 

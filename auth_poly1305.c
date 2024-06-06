@@ -154,10 +154,11 @@ poly1305_auth(const uint8_t *key, size_t keylen, uint8_t *out, size_t *outlen,
 }
 
 static void *
-poly1305_ctx_new(const void *arg)
+poly1305_ctx_new(void)
 {
 	return malloc(sizeof(struct poly1305_ctx));
 }
+
 
 static struct lc_auth_impl	poly1305_impl = {
 	.init = &poly1305_init,

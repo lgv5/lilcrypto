@@ -87,7 +87,7 @@ lc_cipher_ctx_new(const struct lc_cipher_impl *impl)
 	if (ctx == NULL)
 		return NULL;
 	if (impl->ctx_new != NULL) {
-		ctx->arg = impl->ctx_new(NULL);
+		ctx->arg = impl->ctx_new();
 		if (ctx->arg == NULL) {
 			free(ctx);
 			return NULL;
@@ -102,11 +102,10 @@ lc_cipher_ctx_new(const struct lc_cipher_impl *impl)
 void
 lc_cipher_ctx_free(struct lc_cipher_ctx *ctx)
 {
-	if (ctx != NULL && ctx->impl != NULL && ctx->impl->ctx_free != NULL)
-		ctx->impl->ctx_free(ctx);
-	else {
-		if (ctx != NULL)
-			free(ctx->arg);
-		free(ctx);
+	if (ctx != NULL) {
+		if (ctx->impl != NULL && ctx->impl->ctx_free != NULL)
+			ctx->impl->ctx_free(ctx->arg);
+		free(ctx->arg);
 	}
+	free(ctx);
 }
