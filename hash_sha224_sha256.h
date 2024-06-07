@@ -18,7 +18,10 @@
 #include <stdint.h>
 
 
-int	hmac_sha224_sha256_init(void *, const uint8_t *, size_t);
-int	hmac_sha384_sha512_init(void *, const uint8_t *, size_t);
-int	hmac_update(void *, const uint8_t *, size_t);
-int	hmac_final(void *, uint8_t *, size_t *);
+int	sha224_init(void *);
+int	sha224_update(void *, const uint8_t *, size_t);
+int	sha224_final(void *, uint8_t *, size_t *);
+
+int	sha256_init(void *);
+int	sha256_update(void *, const uint8_t *, size_t);
+int	sha256_final(void *, uint8_t *, size_t *);

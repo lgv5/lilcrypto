@@ -17,8 +17,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "lilcrypto.h"
 
-int	hmac_sha224_sha256_init(void *, const uint8_t *, size_t);
-int	hmac_sha384_sha512_init(void *, const uint8_t *, size_t);
-int	hmac_update(void *, const uint8_t *, size_t);
-int	hmac_final(void *, uint8_t *, size_t *);
+
+#define SHA256_CHUNK		64
+#define SHA256_CHUNK_WORDS	(SHA256_CHUNK / sizeof(uint32_t))
+#define SHA256_ROUNDS		64
+
+
+struct sha256_ctx {
+	uint32_t	h0, h1, h2, h3, h4, h5, h6, h7;
+	uint64_t	sz;
+	size_t		mlen;
+	uint8_t		m[SHA256_CHUNK];
+};
+
+
+void	sha256_block(struct sha256_ctx *);

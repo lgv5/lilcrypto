@@ -33,6 +33,10 @@ tests-mac:
 .endif
 .for p in ${MAC}
 	perl ${.CURDIR}/mac.pl ${TESTOPTS} -x ./${p} \
+	    ${WYCHEPROOF_DIR}/testvectors/hmac_sha224_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha224_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors/hmac_sha256_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha256_test.json \
 	    ${WYCHEPROOF_DIR}/testvectors/hmac_sha384_test.json \
 	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha384_test.json \
 	    ${WYCHEPROOF_DIR}/testvectors/hmac_sha512_test.json \

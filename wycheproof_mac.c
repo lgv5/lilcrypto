@@ -79,6 +79,8 @@ kw2impl(const char *s)
 {
 	/* Needs to be sorted. */
 	static const struct kwimpl	tbl[] = {
+		{ "HMACSHA224", &lc_auth_impl_hmac_sha224 },
+		{ "HMACSHA256", &lc_auth_impl_hmac_sha256 },
 		{ "HMACSHA384", &lc_auth_impl_hmac_sha384 },
 		{ "HMACSHA512", &lc_auth_impl_hmac_sha512 },
 	};

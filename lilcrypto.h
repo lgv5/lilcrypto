@@ -24,6 +24,8 @@
  */
 
 /* Hashes. */
+#define LC_SHA224_HASHLEN	28
+#define LC_SHA256_HASHLEN	32
 #define LC_SHA384_HASHLEN	48
 #define LC_SHA512_HASHLEN	64
 
@@ -62,6 +64,8 @@ int	lc_hash(const struct lc_hash_impl *, uint8_t *, size_t *,
 struct lc_hash_ctx	*lc_hash_ctx_new(const struct lc_hash_impl *);
 void			 lc_hash_ctx_free(struct lc_hash_ctx *);
 
+const struct lc_hash_impl	*lc_hash_impl_sha224(void);
+const struct lc_hash_impl	*lc_hash_impl_sha256(void);
 const struct lc_hash_impl	*lc_hash_impl_sha384(void);
 const struct lc_hash_impl	*lc_hash_impl_sha512(void);
 
@@ -84,6 +88,8 @@ struct lc_auth_ctx	*lc_auth_ctx_new(const struct lc_auth_impl *);
 void			 lc_auth_ctx_free(struct lc_auth_ctx *);
 
 const struct lc_auth_impl	*lc_auth_impl_poly1305(void);
+const struct lc_auth_impl	*lc_auth_impl_hmac_sha224(void);
+const struct lc_auth_impl	*lc_auth_impl_hmac_sha256(void);
 const struct lc_auth_impl	*lc_auth_impl_hmac_sha384(void);
 const struct lc_auth_impl	*lc_auth_impl_hmac_sha512(void);
 

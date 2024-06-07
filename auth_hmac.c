@@ -21,6 +21,7 @@
 #include "hash.h"
 #include "auth_hmac.h"
 #include "impl_hmac.h"
+#include "impl_sha256.h"
 #include "impl_sha512.h"
 
 #include "util.h"
@@ -55,6 +56,16 @@ hmac_common_init(void *arg, const uint8_t *key, size_t keylen)
 
 	return lc_hash_init(ctx->hctx) &&
 	    lc_hash_update(ctx->hctx, ikeypad, ctx->blocksz);
+}
+
+int
+hmac_sha224_sha256_init(void *arg, const uint8_t *key, size_t keylen)
+{
+	struct hmac_ctx	*ctx = arg;
+
+	ctx->blocksz = SHA256_CHUNK;
+
+	return hmac_common_init(ctx, key, keylen);
 }
 
 int
@@ -125,6 +136,18 @@ hmac_common_ctx_new(const struct lc_hash_impl *impl)
 }
 
 static void *
+hmac_sha224_ctx_new(void)
+{
+	return hmac_common_ctx_new(lc_hash_impl_sha224());
+}
+
+static void *
+hmac_sha256_ctx_new(void)
+{
+	return hmac_common_ctx_new(lc_hash_impl_sha256());
+}
+
+static void *
 hmac_sha384_ctx_new(void)
 {
 	return hmac_common_ctx_new(lc_hash_impl_sha384());
@@ -146,6 +169,26 @@ hmac_ctx_free(void *arg)
 }
 
 
+static struct lc_auth_impl	hmac_sha224_impl = {
+	.init = &hmac_sha224_sha256_init,
+	.update = &hmac_update,
+	.final = &hmac_final,
+	.auth = NULL,
+
+	.ctx_new = &hmac_sha224_ctx_new,
+	.ctx_free = &hmac_ctx_free,
+};
+
+static struct lc_auth_impl	hmac_sha256_impl = {
+	.init = &hmac_sha224_sha256_init,
+	.update = &hmac_update,
+	.final = &hmac_final,
+	.auth = NULL,
+
+	.ctx_new = &hmac_sha256_ctx_new,
+	.ctx_free = &hmac_ctx_free,
+};
+
 static struct lc_auth_impl	hmac_sha384_impl = {
 	.init = &hmac_sha384_sha512_init,
 	.update = &hmac_update,
@@ -165,6 +208,18 @@ static struct lc_auth_impl	hmac_sha512_impl = {
 	.ctx_new = &hmac_sha512_ctx_new,
 	.ctx_free = &hmac_ctx_free,
 };
+
+const struct lc_auth_impl *
+lc_auth_impl_hmac_sha224(void)
+{
+	return &hmac_sha224_impl;
+}
+
+const struct lc_auth_impl *
+lc_auth_impl_hmac_sha256(void)
+{
+	return &hmac_sha256_impl;
+}
 
 const struct lc_auth_impl *
 lc_auth_impl_hmac_sha384(void)
