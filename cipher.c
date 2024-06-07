@@ -21,10 +21,9 @@
 
 
 int
-lc_cipher_encrypt_init(struct lc_cipher_ctx *ctx, const uint8_t *key,
-    size_t keylen, const uint8_t *iv, size_t ivlen)
+lc_cipher_encrypt_init(struct lc_cipher_ctx *ctx, const void *initparams)
 {
-	return ctx->impl->encrypt_init(ctx->arg, key, keylen, iv, ivlen);
+	return ctx->impl->encrypt_init(ctx->arg, initparams);
 }
 
 int
@@ -43,17 +42,15 @@ lc_cipher_encrypt_final(struct lc_cipher_ctx *ctx, uint8_t *out,
 
 int
 lc_cipher_encrypt(const struct lc_cipher_impl *impl, uint8_t *out,
-    size_t *outlen, const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, const uint8_t *in, size_t inlen)
+    size_t *outlen, const void *initparams, const uint8_t *in, size_t inlen)
 {
-	return impl->encrypt(out, outlen, key, keylen, iv, ivlen, in, inlen);
+	return impl->encrypt(out, outlen, initparams, in, inlen);
 }
 
 int
-lc_cipher_decrypt_init(struct lc_cipher_ctx *ctx, const uint8_t *key,
-    size_t keylen, const uint8_t *iv, size_t ivlen)
+lc_cipher_decrypt_init(struct lc_cipher_ctx *ctx, const void *initparams)
 {
-	return ctx->impl->decrypt_init(ctx->arg, key, keylen, iv, ivlen);
+	return ctx->impl->decrypt_init(ctx->arg, initparams);
 }
 
 int
@@ -72,10 +69,9 @@ lc_cipher_decrypt_final(struct lc_cipher_ctx *ctx, uint8_t *out,
 
 int
 lc_cipher_decrypt(const struct lc_cipher_impl *impl, uint8_t *out,
-    size_t *outlen, const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, const uint8_t *in, size_t inlen)
+    size_t *outlen, const void *initparams, const uint8_t *in, size_t inlen)
 {
-	return impl->decrypt(out, outlen, key, keylen, iv, ivlen, in, inlen);
+	return impl->decrypt(out, outlen, initparams, in, inlen);
 }
 
 struct lc_cipher_ctx *

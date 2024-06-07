@@ -19,21 +19,19 @@
 
 
 struct lc_cipher_impl {
-	int	 (*encrypt_init)(void *, const uint8_t *, size_t,
+	int	 (*encrypt_init)(void *, const void *);
+	int	 (*encrypt_update)(void *, uint8_t *, size_t *,
 		    const uint8_t *, size_t);
-	int	 (*encrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
-		    size_t);
 	int	 (*encrypt_final)(void *, uint8_t *, size_t *);
-	int	 (*encrypt)(uint8_t *, size_t *, const uint8_t *, size_t,
-		    const uint8_t *, size_t, const uint8_t *, size_t);
-
-	int	 (*decrypt_init)(void *, const uint8_t *, size_t,
-		    const uint8_t *, size_t);
-	int	 (*decrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
+	int	 (*encrypt)(uint8_t *, size_t *, const void *, const uint8_t *,
 		    size_t);
+
+	int	 (*decrypt_init)(void *, const void *);
+	int	 (*decrypt_update)(void *, uint8_t *, size_t *,
+		    const uint8_t *, size_t);
 	int	 (*decrypt_final)(void *, uint8_t *, size_t *);
-	int	 (*decrypt)(uint8_t *, size_t *, const uint8_t *, size_t,
-		    const uint8_t *, size_t, const uint8_t *, size_t);
+	int	 (*decrypt)(uint8_t *, size_t *, const void *, const uint8_t *,
+		    size_t);
 
 	void	*(*ctx_new)(void);
 	void	 (*ctx_free)(void *);

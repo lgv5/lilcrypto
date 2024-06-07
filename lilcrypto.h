@@ -147,22 +147,18 @@ struct lc_cipher_ctx;
 struct lc_cipher_impl;
 
 
-int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, const uint8_t *, size_t,
-	    const uint8_t *, size_t);
+int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, const void *);
 int	lc_cipher_encrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t);
 int	lc_cipher_encrypt_final(struct lc_cipher_ctx *, uint8_t *, size_t *);
 int	lc_cipher_encrypt(const struct lc_cipher_impl *, uint8_t *, size_t *,
-	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
-	    size_t);
-int	lc_cipher_decrypt_init(struct lc_cipher_ctx *, const uint8_t *, size_t,
-	    const uint8_t *, size_t);
+	    const void *, const uint8_t *, size_t);
+int	lc_cipher_decrypt_init(struct lc_cipher_ctx *, const void *);
 int	lc_cipher_decrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t);
 int	lc_cipher_decrypt_final(struct lc_cipher_ctx *, uint8_t *, size_t *);
 int	lc_cipher_decrypt(const struct lc_cipher_impl *, uint8_t *, size_t *,
-	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
-	    size_t);
+	    const void *, const uint8_t *, size_t);
 
 struct lc_cipher_ctx	*lc_cipher_ctx_new(const struct lc_cipher_impl *);
 void			 lc_cipher_ctx_free(struct lc_cipher_ctx *);
