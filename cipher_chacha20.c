@@ -26,7 +26,7 @@
 
 
 int
-chacha20_x_init_from(void *arg, const uint8_t *key, size_t keylen,
+chacha20_common_init_from(void *arg, const uint8_t *key, size_t keylen,
     const uint8_t *iv, size_t ivlen, uint32_t counter)
 {
 	struct chacha20_ctx	*ctx = arg;
@@ -48,15 +48,15 @@ chacha20_x_init_from(void *arg, const uint8_t *key, size_t keylen,
 }
 
 int
-chacha20_x_init(void *arg, const uint8_t *key, size_t keylen,
+chacha20_common_init(void *arg, const uint8_t *key, size_t keylen,
     const uint8_t *iv, size_t ivlen)
 {
-	return chacha20_x_init_from(arg, key, keylen, iv, ivlen, 0);
+	return chacha20_common_init_from(arg, key, keylen, iv, ivlen, 0);
 }
 
 int
-chacha20_x_update(void *arg, uint8_t *out, size_t *outlen, const uint8_t *in,
-    size_t inlen)
+chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
+    const uint8_t *in, size_t inlen)
 {
 	struct chacha20_ctx	*ctx = arg;
 	size_t			 i, blocks;
@@ -69,7 +69,7 @@ chacha20_x_update(void *arg, uint8_t *out, size_t *outlen, const uint8_t *in,
 	if (blocks + ctx->c > CHACHA20_CTRMAX)
 		return 0;
 
-	*outlen = (ctx->mlen + inlen) / CHACHA20_CHUNK * CHACHA20_CHUNK;
+	*outlen = ctx->mlen + inlen - ((ctx->mlen + inlen) % CHACHA20_CHUNK);
 	if (out == NULL)
 		return 1;
 
@@ -117,7 +117,7 @@ chacha20_x_update(void *arg, uint8_t *out, size_t *outlen, const uint8_t *in,
 }
 
 int
-chacha20_x_final(void *arg, uint8_t *out, size_t *outlen)
+chacha20_common_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct chacha20_ctx	*ctx = arg;
 	size_t			 i, off;
@@ -150,8 +150,9 @@ chacha20_x_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 int
-chacha20_x(const uint8_t *key, size_t keylen, const uint8_t *iv, size_t ivlen,
-    uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
+chacha20_common(const uint8_t *key, size_t keylen, const uint8_t *iv,
+    size_t ivlen, uint8_t *out, size_t *outlen, const uint8_t *in,
+    size_t inlen)
 {
 	struct chacha20_ctx	ctx;
 	size_t			l0, l1;
@@ -168,9 +169,9 @@ chacha20_x(const uint8_t *key, size_t keylen, const uint8_t *iv, size_t ivlen,
 		return 1;
 	}
 
-	rc = chacha20_x_init(&ctx, key, keylen, iv, ivlen) &&
-	    chacha20_x_update(&ctx, out, &l0, in, inlen) &
-	    chacha20_x_final(&ctx, out + l0, &l1);
+	rc = chacha20_common_init(&ctx, key, keylen, iv, ivlen) &&
+	    chacha20_common_update(&ctx, out, &l0, in, inlen) &
+	    chacha20_common_final(&ctx, out + l0, &l1);
 
 	if (rc)
 		*outlen = l0 + l1;
@@ -186,15 +187,15 @@ chacha20_ctx_new(void)
 
 
 static struct lc_cipher_impl	chacha20_impl = {
-	.encrypt_init = &chacha20_x_init,
-	.encrypt_update = &chacha20_x_update,
-	.encrypt_final = &chacha20_x_final,
-	.encrypt = &chacha20_x,
+	.encrypt_init = &chacha20_common_init,
+	.encrypt_update = &chacha20_common_update,
+	.encrypt_final = &chacha20_common_final,
+	.encrypt = &chacha20_common,
 
-	.decrypt_init = &chacha20_x_init,
-	.decrypt_update = &chacha20_x_update,
-	.decrypt_final = &chacha20_x_final,
-	.decrypt = &chacha20_x,
+	.decrypt_init = &chacha20_common_init,
+	.decrypt_update = &chacha20_common_update,
+	.decrypt_final = &chacha20_common_final,
+	.decrypt = &chacha20_common,
 
 	.ctx_new = &chacha20_ctx_new,
 	.ctx_free = NULL,

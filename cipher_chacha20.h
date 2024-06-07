@@ -18,12 +18,12 @@
 #include <stdint.h>
 
 
-int	chacha20_x_init_from(void *, const uint8_t *, size_t, const uint8_t *,
-	    size_t, uint32_t);
-int	chacha20_x_init(void *, const uint8_t *, size_t, const uint8_t *,
+int	chacha20_common_init_from(void *, const uint8_t *, size_t,
+	    const uint8_t *, size_t, uint32_t);
+int	chacha20_common_init(void *, const uint8_t *, size_t, const uint8_t *,
 	    size_t);
-int	chacha20_x_update(void *, uint8_t *, size_t *, const uint8_t *,
+int	chacha20_common_update(void *, uint8_t *, size_t *, const uint8_t *,
 	    size_t);
-int	chacha20_x_final(void *, uint8_t *, size_t *);
-int	chacha20_x(const uint8_t *, size_t, const uint8_t *, size_t, uint8_t *,
-	    size_t *, const uint8_t *, size_t);
+int	chacha20_common_final(void *, uint8_t *, size_t *);
+int	chacha20_common(const uint8_t *, size_t, const uint8_t *, size_t,
+	    uint8_t *, size_t *, const uint8_t *, size_t);

@@ -60,11 +60,11 @@ chacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
 
 	for (i = 0; i < LC_POLY1305_KEYLEN; i++)
 		poly1305_key[i] = 0;
-	if (!chacha20_x_init(&cctx, key, keylen, iv, ivlen) ||
-	    !chacha20_x_update(&cctx, poly1305_key, &olen, poly1305_key,
+	if (!chacha20_common_init(&cctx, key, keylen, iv, ivlen) ||
+	    !chacha20_common_update(&cctx, poly1305_key, &olen, poly1305_key,
 	    LC_POLY1305_KEYLEN))
 		return 0;
-	if (!chacha20_x_final(&cctx, poly1305_key + olen, &olen))
+	if (!chacha20_common_final(&cctx, poly1305_key + olen, &olen))
 		return 0;
 
 	if (!poly1305_init(&pctx, poly1305_key, LC_POLY1305_KEYLEN) ||
@@ -74,12 +74,12 @@ chacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
 		if (!poly1305_update(&pctx, zeropad, 16 - (aadlen % 16)))
 			return 0;
 
-	if (!chacha20_x_init_from(&cctx, key, keylen, iv, ivlen, 1))
+	if (!chacha20_common_init_from(&cctx, key, keylen, iv, ivlen, 1))
 		return 0;
-	if (!chacha20_x_update(&cctx, out, &olen, in, inlen))
+	if (!chacha20_common_update(&cctx, out, &olen, in, inlen))
 		return 0;
 	*outlen = olen;
-	if (!chacha20_x_final(&cctx, out + olen, &olen))
+	if (!chacha20_common_final(&cctx, out + olen, &olen))
 		return 0;
 	if (!poly1305_update(&pctx, out, inlen))
 		return 0;
@@ -136,11 +136,11 @@ chacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
 
 	for (i = 0; i < LC_POLY1305_KEYLEN; i++)
 		poly1305_key[i] = 0;
-	if (!chacha20_x_init(&cctx, key, keylen, iv, ivlen) ||
-	    !chacha20_x_update(&cctx, poly1305_key, &olen, poly1305_key,
+	if (!chacha20_common_init(&cctx, key, keylen, iv, ivlen) ||
+	    !chacha20_common_update(&cctx, poly1305_key, &olen, poly1305_key,
 	    LC_POLY1305_KEYLEN))
 		return 0;
-	if (!chacha20_x_final(&cctx, poly1305_key + olen, &olen))
+	if (!chacha20_common_final(&cctx, poly1305_key + olen, &olen))
 		return 0;
 
 	if (!poly1305_init(&pctx, poly1305_key, LC_POLY1305_KEYLEN) ||
@@ -168,12 +168,12 @@ chacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
 	lc_scrub(buf, sizeof(buf));
 	lc_scrub(poly1305_key, sizeof(poly1305_key));
 
-	if (!chacha20_x_init_from(&cctx, key, keylen, iv, ivlen, 1))
+	if (!chacha20_common_init_from(&cctx, key, keylen, iv, ivlen, 1))
 		return 0;
-	if (!chacha20_x_update(&cctx, out, &olen, in, ctlen))
+	if (!chacha20_common_update(&cctx, out, &olen, in, ctlen))
 		return 0;
 	*outlen = olen;
-	if (!chacha20_x_final(&cctx, out + olen, &olen))
+	if (!chacha20_common_final(&cctx, out + olen, &olen))
 		return 0;
 	*outlen += olen;
 
