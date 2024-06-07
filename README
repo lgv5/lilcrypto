@@ -33,13 +33,13 @@ Ciphers
 -------
 
 - [x] ChaCha20
-- [ ] XChaCha20
+- [x] XChaCha20
 
 AEAD
 ----
 
 - [x] ChaCha20-Poly1305
-- [ ] XChaCha20-Poly1305
+- [x] XChaCha20-Poly1305
 
 ECC
 ---

@@ -55,6 +55,49 @@ chacha20_common_init(void *arg, const uint8_t *key, size_t keylen,
 }
 
 int
+xchacha20_common_init_from(void *arg, const uint8_t *key, size_t keylen,
+    const uint8_t *iv, size_t ivlen, uint64_t counter)
+{
+	struct chacha20_ctx	*ctx = arg;
+	size_t			 i;
+
+	if (keylen != LC_XCHACHA20_KEYLEN || ivlen != LC_XCHACHA20_IVLEN)
+		return 0;
+
+	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
+		ctx->s[i] = 0;
+	for (i = 0; i < CHACHA20_KEY_WORDS; i++)
+		ctx->k[i] = load32le(&key[i * 4]);
+	for (i = 0; i < CHACHA20_NONCE_WORDS; i++)
+		ctx->n[i] = load32le(&iv[i * 4]);
+	ctx->mlen = 0;
+
+	hchacha20_block(ctx);
+
+	ctx->k[0] = ctx->s[0];
+	ctx->k[1] = ctx->s[1];
+	ctx->k[2] = ctx->s[2];
+	ctx->k[3] = ctx->s[3];
+	ctx->k[4] = ctx->s[12];
+	ctx->k[5] = ctx->s[13];
+	ctx->k[6] = ctx->s[14];
+	ctx->k[7] = ctx->s[15];
+	ctx->n[0] = counter;
+	ctx->n[1] = counter >> 32;
+	ctx->n[2] = load32le(&iv[16]);
+	ctx->n[3] = load32le(&iv[20]);
+
+	return 1;
+}
+
+int
+xchacha20_common_init(void *arg, const uint8_t *key, size_t keylen,
+    const uint8_t *iv, size_t ivlen)
+{
+	return xchacha20_common_init_from(arg, key, keylen, iv, ivlen, 0);
+}
+
+int
 chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
     const uint8_t *in, size_t inlen)
 {
@@ -201,8 +244,29 @@ static struct lc_cipher_impl	chacha20_impl = {
 	.ctx_free = NULL,
 };
 
+static struct lc_cipher_impl	xchacha20_impl = {
+	.encrypt_init = &xchacha20_common_init,
+	.encrypt_update = &chacha20_common_update,
+	.encrypt_final = &chacha20_common_final,
+	.encrypt = &chacha20_common,
+
+	.decrypt_init = &xchacha20_common_init,
+	.decrypt_update = &chacha20_common_update,
+	.decrypt_final = &chacha20_common_final,
+	.decrypt = &chacha20_common,
+
+	.ctx_new = &chacha20_ctx_new,
+	.ctx_free = NULL,
+};
+
 const struct lc_cipher_impl *
 lc_cipher_impl_chacha20(void)
 {
 	return &chacha20_impl;
+}
+
+const struct lc_cipher_impl *
+lc_cipher_impl_xchacha20(void)
+{
+	return &xchacha20_impl;
 }

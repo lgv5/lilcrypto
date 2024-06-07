@@ -22,7 +22,9 @@ tests-aead:
 .for p in ${AEAD}
 	perl ${.CURDIR}/aead.pl ${TESTOPTS} -x ./${p} \
 	    ${WYCHEPROOF_DIR}/testvectors/chacha20_poly1305_test.json \
-	    ${WYCHEPROOF_DIR}/testvectors_v1/chacha20_poly1305_test.json
+	    ${WYCHEPROOF_DIR}/testvectors_v1/chacha20_poly1305_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors/xchacha20_poly1305_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors_v1/xchacha20_poly1305_test.json
 .endfor
 
 tests-mac:

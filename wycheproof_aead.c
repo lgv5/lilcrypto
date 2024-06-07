@@ -79,6 +79,7 @@ kw2impl(const char *s)
 {
 	static const struct kwimpl	tbl[] = {
 		{ "CHACHA20-POLY1305", &lc_aead_impl_chacha20_poly1305 },
+		{ "XCHACHA20-POLY1305", &lc_aead_impl_xchacha20_poly1305 },
 	};
 	struct kwimpl	*match;
 

@@ -38,3 +38,4 @@ struct chacha20_ctx {
 
 
 void	chacha20_block(struct chacha20_ctx *);
+void	hchacha20_block(struct chacha20_ctx *);

@@ -34,6 +34,8 @@
 /* Ciphers. */
 #define LC_CHACHA20_KEYLEN	32
 #define LC_CHACHA20_IVLEN	12
+#define LC_XCHACHA20_KEYLEN	32
+#define LC_XCHACHA20_IVLEN	24
 
 
 /*
@@ -115,6 +117,7 @@ struct lc_cipher_ctx	*lc_cipher_ctx_new(const struct lc_cipher_impl *);
 void			 lc_cipher_ctx_free(struct lc_cipher_ctx *);
 
 const struct lc_cipher_impl	*lc_cipher_impl_chacha20(void);
+const struct lc_cipher_impl	*lc_cipher_impl_xchacha20(void);
 
 
 /*
@@ -132,6 +135,7 @@ int	lc_aead_open(const struct lc_aead_impl *, const uint8_t *, size_t,
     const uint8_t *, size_t);
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
+const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
 
 
 /*

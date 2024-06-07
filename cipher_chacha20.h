@@ -22,6 +22,10 @@ int	chacha20_common_init_from(void *, const uint8_t *, size_t,
 	    const uint8_t *, size_t, uint32_t);
 int	chacha20_common_init(void *, const uint8_t *, size_t, const uint8_t *,
 	    size_t);
+int	xchacha20_common_init_from(void *, const uint8_t *, size_t,
+	    const uint8_t *, size_t, uint64_t);
+int	xchacha20_common_init(void *, const uint8_t *, size_t, const uint8_t *,
+	    size_t);
 int	chacha20_common_update(void *, uint8_t *, size_t *, const uint8_t *,
 	    size_t);
 int	chacha20_common_final(void *, uint8_t *, size_t *);
