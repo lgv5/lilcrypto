@@ -64,8 +64,8 @@ chacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
 	    !chacha20_x_update(&cctx, poly1305_key, &olen, poly1305_key,
 	    LC_POLY1305_KEYLEN))
 		return 0;
-	for (i = 0; i < LC_POLY1305_KEYLEN / sizeof(uint32_t); i++)
-		store32le(&poly1305_key[i * 4], cctx.s[i]);
+	if (!chacha20_x_final(&cctx, poly1305_key + olen, &olen))
+		return 0;
 
 	if (!poly1305_init(&pctx, poly1305_key, LC_POLY1305_KEYLEN) ||
 	    !poly1305_update(&pctx, aad, aadlen))
@@ -140,8 +140,8 @@ chacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
 	    !chacha20_x_update(&cctx, poly1305_key, &olen, poly1305_key,
 	    LC_POLY1305_KEYLEN))
 		return 0;
-	for (i = 0; i < LC_POLY1305_KEYLEN / sizeof(uint32_t); i++)
-		store32le(&poly1305_key[i * 4], cctx.s[i]);
+	if (!chacha20_x_final(&cctx, poly1305_key + olen, &olen))
+		return 0;
 
 	if (!poly1305_init(&pctx, poly1305_key, LC_POLY1305_KEYLEN) ||
 	    !poly1305_update(&pctx, aad, aadlen))
