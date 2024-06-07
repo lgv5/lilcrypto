@@ -213,7 +213,7 @@ chacha20_common(const uint8_t *key, size_t keylen, const uint8_t *iv,
 	}
 
 	rc = chacha20_common_init(&ctx, key, keylen, iv, ivlen) &&
-	    chacha20_common_update(&ctx, out, &l0, in, inlen) &
+	    chacha20_common_update(&ctx, out, &l0, in, inlen) &&
 	    chacha20_common_final(&ctx, out + l0, &l1);
 
 	if (rc)
