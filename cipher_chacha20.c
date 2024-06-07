@@ -32,7 +32,7 @@ chacha20_common_init_from(void *arg, const uint8_t *key, size_t keylen,
 	struct chacha20_ctx	*ctx = arg;
 	size_t			 i;
 
-	if (keylen != LC_CHACHA20_KEYLEN || ivlen != LC_CHACHA20_IVLEN)
+	if (keylen != LC_CHACHA20_KEYLEN || ivlen != LC_CHACHA20_NONCELEN)
 		return 0;
 
 	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
@@ -61,7 +61,7 @@ xchacha20_common_init_from(void *arg, const uint8_t *key, size_t keylen,
 	struct chacha20_ctx	*ctx = arg;
 	size_t			 i;
 
-	if (keylen != LC_XCHACHA20_KEYLEN || ivlen != LC_XCHACHA20_IVLEN)
+	if (keylen != LC_XCHACHA20_KEYLEN || ivlen != LC_XCHACHA20_NONCELEN)
 		return 0;
 
 	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
