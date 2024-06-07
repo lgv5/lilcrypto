@@ -175,11 +175,9 @@ struct lc_aead_impl;
 
 
 int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *,
-	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
-	    size_t, const uint8_t *, size_t);
+	    const void *, const uint8_t *, size_t, const uint8_t *, size_t);
 int	lc_aead_open(const struct lc_aead_impl *, uint8_t *, size_t *,
-	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
-	    size_t, const uint8_t *, size_t);
+	    const void *, const uint8_t *, size_t, const uint8_t *, size_t);
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
 const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
