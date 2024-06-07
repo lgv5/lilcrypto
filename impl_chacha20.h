@@ -33,7 +33,8 @@ struct chacha20_ctx {
 	uint32_t	k[CHACHA20_KEY_WORDS];
 	uint32_t	c;
 	uint32_t	n[CHACHA20_NONCE_WORDS];
-	size_t		blen;
+	size_t		mlen;
+	uint8_t		m[CHACHA20_CHUNK];
 };
 
 

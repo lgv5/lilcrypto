@@ -42,7 +42,7 @@ chacha20_x_init_from(void *arg, const uint8_t *key, size_t keylen,
 	ctx->c = counter;
 	for (i = 0; i < CHACHA20_NONCE_WORDS; i++)
 		ctx->n[i] = load32le(&iv[i * 4]);
-	ctx->blen = 0;
+	ctx->mlen = 0;
 
 	return 1;
 }
@@ -59,50 +59,42 @@ chacha20_x_update(void *arg, uint8_t *out, size_t *outlen, const uint8_t *in,
     size_t inlen)
 {
 	struct chacha20_ctx	*ctx = arg;
+	size_t			 i, blocks;
 	uint32_t		 h;
-	uint8_t			 s[4];
-	size_t			 i, blocks, off, pad;
 
 	*outlen = 0;
-	if (inlen > SIZE_MAX - (CHACHA20_CHUNK - 1) - ctx->blen)
+	if (inlen > SIZE_MAX - (CHACHA20_CHUNK - 1) - ctx->mlen)
 		return 0;
-	blocks = inlen + ctx->blen + CHACHA20_CHUNK - 1;
-	if (blocks / CHACHA20_CHUNK + ctx->c > CHACHA20_CTRMAX)
+	blocks = (inlen + ctx->mlen + CHACHA20_CHUNK - 1) / CHACHA20_CHUNK;
+	if (blocks + ctx->c > CHACHA20_CTRMAX)
 		return 0;
 
-	if (out == NULL) {
-		*outlen = inlen;
+	*outlen = (ctx->mlen + inlen) / CHACHA20_CHUNK * CHACHA20_CHUNK;
+	if (out == NULL)
 		return 1;
+
+	for (i = 0; i + ctx->mlen < CHACHA20_CHUNK && i < inlen; i++)
+		ctx->m[i + ctx->mlen] = in[i];
+	ctx->mlen += i;
+	in += i;
+	inlen -= i;
+
+	if (ctx->mlen == CHACHA20_CHUNK) {
+		chacha20_block(ctx);
+		ctx->c++;
+
+		for (i = 0; i < CHACHA20_CHUNK_WORDS; i++) {
+			h = load32le(&ctx->m[i * 4]);
+			h ^= ctx->s[i];
+			store32le(&out[i * 4], h);
+		}
+		out += CHACHA20_CHUNK;
+		ctx->mlen = 0;
 	}
 
-	*outlen = inlen;
+	if (inlen == 0)
+		return 1;
 
-	if (ctx->blen == 0)
-		goto fullblock;
-
-	off = ctx->blen % 4;
-	if (off != 0) {
-		store32le(s, ctx->s[ctx->blen / 4]);
-		for (i = 0; i + off < 4 && i < inlen; i++)
-			out[i] = in[i] ^ s[i + off];
-		ctx->blen += i;
-		out += i;
-		in += i;
-		inlen -= i;
-	}
-
-	pad = inlen % 4;
-	for (i = 0; i + ctx->blen < CHACHA20_CHUNK && i < inlen - pad; i += 4) {
-		h = load32le(&in[i * 4]);
-		h ^= ctx->s[(i + ctx->blen) / 4];
-		store32le(&out[i * 4], h);
-	}
-	ctx->blen += i * 4;
-	out += i * 4;
-	in += i * 4;
-	inlen -= i * 4;
-
- fullblock:
 	while (inlen >= CHACHA20_CHUNK) {
 		chacha20_block(ctx);
 		ctx->c++;
@@ -117,23 +109,9 @@ chacha20_x_update(void *arg, uint8_t *out, size_t *outlen, const uint8_t *in,
 		inlen -= CHACHA20_CHUNK;
 	}
 
-	chacha20_block(ctx);
-	ctx->c++;
-	ctx->blen = inlen;
-
-	pad = inlen % 4;
-	for (i = 0; i < (inlen - pad) / 4; i++) {
-		h = load32le(&in[i * 4]);
-		h ^= ctx->s[i];
-		store32le(&out[i * 4], h);
-	}
-	out += i * 4;
-	in += i * 4;
-	inlen -= i * 4;
-
-	store32le(s, ctx->s[i]);
-	for (i = 0; i < pad; i++)
-		out[i] = in[i] ^ s[i];
+	for (i = 0; i < inlen; i++)
+		ctx->m[i] = in[i];
+	ctx->mlen = inlen;
 
 	return 1;
 }
@@ -142,8 +120,30 @@ int
 chacha20_x_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct chacha20_ctx	*ctx = arg;
+	size_t			 i, off;
+	uint32_t		 h;
+	uint8_t			 s[4];
 
-	*outlen = 0;
+	*outlen = ctx->mlen;
+	if (out == NULL)
+		return 1;
+
+	if (ctx->mlen > 0)
+		chacha20_block(ctx);
+
+	for (i = 0; i < ctx->mlen / 4; i++) {
+		h = load32le(&ctx->m[i * 4]);
+		h ^= ctx->s[i];
+		store32le(&out[i * 4], h);
+	}
+	off = i * 4;
+	ctx->mlen -= off;
+	out += off;
+
+	store32le(&s[0], ctx->s[i]);
+	for (i = 0; i < ctx->mlen; i++)
+		out[i] = ctx->m[i + off] ^ s[i];
+
 	lc_scrub(ctx, sizeof(*ctx));
 
 	return 1;
