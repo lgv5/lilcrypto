@@ -60,10 +60,10 @@ chacha20_block(struct chacha20_ctx *ctx)
 	x[9] = ctx->k[5];
 	x[10] = ctx->k[6];
 	x[11] = ctx->k[7];
-	x[12] = ctx->c;
-	x[13] = ctx->n[0];
-	x[14] = ctx->n[1];
-	x[15] = ctx->n[2];
+	x[12] = ctx->n[0];
+	x[13] = ctx->n[1];
+	x[14] = ctx->n[2];
+	x[15] = ctx->n[3];
 
 	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
 		ctx->s[i] = x[i];

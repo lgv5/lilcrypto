@@ -24,14 +24,13 @@
 #define CHACHA20_CHUNK_WORDS	(CHACHA20_CHUNK / sizeof(uint32_t))
 #define CHACHA20_CTRMAX		4294967295	/* 2^32 - 1 */
 #define CHACHA20_KEY_WORDS	(LC_CHACHA20_KEYLEN / sizeof(uint32_t))
-#define CHACHA20_NONCE_WORDS	(LC_CHACHA20_IVLEN / sizeof(uint32_t))
+#define CHACHA20_NONCE_WORDS	4
 #define CHACHA20_ROUNDS		10
 
 
 struct chacha20_ctx {
 	uint32_t	s[CHACHA20_CHUNK_WORDS];
 	uint32_t	k[CHACHA20_KEY_WORDS];
-	uint32_t	c;
 	uint32_t	n[CHACHA20_NONCE_WORDS];
 	size_t		mlen;
 	uint8_t		m[CHACHA20_CHUNK];

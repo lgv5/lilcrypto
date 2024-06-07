@@ -39,9 +39,9 @@ chacha20_common_init_from(void *arg, const uint8_t *key, size_t keylen,
 		ctx->s[i] = 0;
 	for (i = 0; i < CHACHA20_KEY_WORDS; i++)
 		ctx->k[i] = load32le(&key[i * 4]);
-	ctx->c = counter;
-	for (i = 0; i < CHACHA20_NONCE_WORDS; i++)
-		ctx->n[i] = load32le(&iv[i * 4]);
+	ctx->n[0] = counter;
+	for (i = 1; i < CHACHA20_NONCE_WORDS; i++)
+		ctx->n[i] = load32le(&iv[(i - 1) * 4]);
 	ctx->mlen = 0;
 
 	return 1;
@@ -66,7 +66,7 @@ chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
 	if (inlen > SIZE_MAX - (CHACHA20_CHUNK - 1) - ctx->mlen)
 		return 0;
 	blocks = (inlen + ctx->mlen + CHACHA20_CHUNK - 1) / CHACHA20_CHUNK;
-	if (blocks + ctx->c > CHACHA20_CTRMAX)
+	if (blocks + ctx->n[0] > CHACHA20_CTRMAX)
 		return 0;
 
 	*outlen = ctx->mlen + inlen - ((ctx->mlen + inlen) % CHACHA20_CHUNK);
@@ -81,7 +81,7 @@ chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
 
 	if (ctx->mlen == CHACHA20_CHUNK) {
 		chacha20_block(ctx);
-		ctx->c++;
+		ctx->n[0]++;
 
 		for (i = 0; i < CHACHA20_CHUNK_WORDS; i++) {
 			h = load32le(&ctx->m[i * 4]);
@@ -97,7 +97,7 @@ chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
 
 	while (inlen >= CHACHA20_CHUNK) {
 		chacha20_block(ctx);
-		ctx->c++;
+		ctx->n[0]++;
 
 		for (i = 0; i < CHACHA20_CHUNK_WORDS; i++) {
 			h = load32le(&in[i * 4]);
