@@ -50,38 +50,38 @@
 /* Authentication */
 
 struct lc_hmac_params {
-	size_t		 keylen;
-	const uint8_t	*key;
+	size_t	 keylen;
+	uint8_t	*key;
 };
 
 struct lc_poly1305_params {
-	const uint8_t	key[LC_POLY1305_KEYLEN];
+	uint8_t	key[LC_POLY1305_KEYLEN];
 };
 
 /* Ciphers. */
 
 struct lc_chacha20_params {
-	const uint8_t	key[LC_CHACHA20_KEYLEN];
-	const uint8_t	nonce[LC_CHACHA20_NONCELEN];
+	uint8_t		key[LC_CHACHA20_KEYLEN];
+	uint8_t		nonce[LC_CHACHA20_NONCELEN];
 	uint32_t	counter;
 };
 
 struct lc_xchacha20_params {
-	const uint8_t	key[LC_XCHACHA20_KEYLEN];
-	const uint8_t	nonce[LC_XCHACHA20_NONCELEN];
+	uint8_t		key[LC_XCHACHA20_KEYLEN];
+	uint8_t		nonce[LC_XCHACHA20_NONCELEN];
 	uint32_t	counter;
 };
 
 /* AEAD. */
 
 struct lc_chacha20_poly1305_params {
-	const uint8_t	key[LC_CHACHA20_KEYLEN];
-	const uint8_t	nonce[LC_CHACHA20_NONCELEN];
+	uint8_t	key[LC_CHACHA20_KEYLEN];
+	uint8_t	nonce[LC_CHACHA20_NONCELEN];
 };
 
 struct lc_xchacha20_poly1305_params {
-	const uint8_t	key[LC_XCHACHA20_KEYLEN];
-	const uint8_t	nonce[LC_XCHACHA20_NONCELEN];
+	uint8_t	key[LC_XCHACHA20_KEYLEN];
+	uint8_t	nonce[LC_XCHACHA20_NONCELEN];
 };
 
 
