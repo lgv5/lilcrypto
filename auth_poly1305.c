@@ -138,7 +138,7 @@ poly1305_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 static int
-poly1305_auth(const uint8_t *key, size_t keylen, uint8_t *out, size_t *outlen,
+poly1305_auth(uint8_t *out, size_t *outlen, const uint8_t *key, size_t keylen,
     const uint8_t *in, size_t inlen)
 {
 	struct poly1305_ctx	ctx;

@@ -22,7 +22,7 @@ struct lc_auth_impl {
 	int	 (*init)(void *, const uint8_t *, size_t);
 	int	 (*update)(void *, const uint8_t *, size_t);
 	int	 (*final)(void *, uint8_t *, size_t *);
-	int	 (*auth)(const uint8_t *, size_t, uint8_t *, size_t *,
+	int	 (*auth)(uint8_t *, size_t *, const uint8_t *, size_t,
 		    const uint8_t *, size_t);
 
 	void	*(*ctx_new)(void);

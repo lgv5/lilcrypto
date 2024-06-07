@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef LILCRYPTO_H
+#define LILCRYPTO_H
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -81,8 +84,8 @@ struct lc_auth_impl;
 int	lc_auth_init(struct lc_auth_ctx *, const uint8_t *, size_t);
 int	lc_auth_update(struct lc_auth_ctx *, const uint8_t *, size_t);
 int	lc_auth_final(struct lc_auth_ctx *, uint8_t *, size_t *);
-int	lc_auth(const struct lc_auth_impl *, const uint8_t *, size_t,
-	    uint8_t *, size_t *, const uint8_t *, size_t);
+int	lc_auth(const struct lc_auth_impl *, uint8_t *, size_t *,
+	    const uint8_t *, size_t, const uint8_t *, size_t);
 
 struct lc_auth_ctx	*lc_auth_ctx_new(const struct lc_auth_impl *);
 void			 lc_auth_ctx_free(struct lc_auth_ctx *);
@@ -107,17 +110,17 @@ int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, const uint8_t *, size_t,
 int	lc_cipher_encrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t);
 int	lc_cipher_encrypt_final(struct lc_cipher_ctx *, uint8_t *, size_t *);
-int	lc_cipher_encrypt(const struct lc_cipher_impl *, const uint8_t *,
-	    size_t, const uint8_t *, size_t, uint8_t *, size_t *,
-	    const uint8_t *, size_t);
+int	lc_cipher_encrypt(const struct lc_cipher_impl *, uint8_t *, size_t *,
+	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
+	    size_t);
 int	lc_cipher_decrypt_init(struct lc_cipher_ctx *, const uint8_t *, size_t,
 	    const uint8_t *, size_t);
 int	lc_cipher_decrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t);
 int	lc_cipher_decrypt_final(struct lc_cipher_ctx *, uint8_t *, size_t *);
-int	lc_cipher_decrypt(const struct lc_cipher_impl *, const uint8_t *,
-	    size_t, const uint8_t *, size_t, uint8_t *, size_t *,
-	    const uint8_t *, size_t);
+int	lc_cipher_decrypt(const struct lc_cipher_impl *, uint8_t *, size_t *,
+	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
+	    size_t);
 
 struct lc_cipher_ctx	*lc_cipher_ctx_new(const struct lc_cipher_impl *);
 void			 lc_cipher_ctx_free(struct lc_cipher_ctx *);
@@ -133,12 +136,12 @@ const struct lc_cipher_impl	*lc_cipher_impl_xchacha20(void);
 struct lc_aead_impl;
 
 
-int	lc_aead_seal(const struct lc_aead_impl *, const uint8_t *, size_t,
-    const uint8_t *, size_t, uint8_t *, size_t *, const uint8_t *, size_t,
-    const uint8_t *, size_t);
-int	lc_aead_open(const struct lc_aead_impl *, const uint8_t *, size_t,
-    const uint8_t *, size_t, uint8_t *, size_t *, const uint8_t *, size_t,
-    const uint8_t *, size_t);
+int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *,
+	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
+	    size_t, const uint8_t *, size_t);
+int	lc_aead_open(const struct lc_aead_impl *, uint8_t *, size_t *,
+	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
+	    size_t, const uint8_t *, size_t);
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
 const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
@@ -150,3 +153,5 @@ const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
 
 int	lc_hexdump_fp(FILE *, const void *, size_t);
 void	lc_scrub(void *, size_t);
+
+#endif /* LILCRYPTO_H */

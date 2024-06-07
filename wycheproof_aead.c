@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 
 	/* Encryption. */
 
-	if (!lc_aead_seal(impl, key, keylenarg, iv, ivlenarg, NULL, &encoutlen,
+	if (!lc_aead_seal(impl, NULL, &encoutlen, key, keylenarg, iv, ivlenarg,
 	    aad, aadlen, msg, msglen)) {
 		puts("invalid");
 		return 1;
@@ -243,8 +243,8 @@ main(int argc, char *argv[])
 	encout = malloc(encoutlen);
 	if (encout == NULL)
 		err(1, "out of memory");
-	if (!lc_aead_seal(impl, key, keylenarg, iv, ivlenarg, encout,
-	    &encoutlen, aad, aadlen, msg, msglen)) {
+	if (!lc_aead_seal(impl, encout, &encoutlen, key, keylenarg, iv,
+	    ivlenarg, aad, aadlen, msg, msglen)) {
 		puts("invalid");
 		return 1;
 	}
@@ -272,7 +272,8 @@ main(int argc, char *argv[])
 			    (size_t)LC_POLY1305_TAGLEN);
 			lc_hexdump_fp(stderr, tag, taglen);
 			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, encout + ctlen, LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, encout + ctlen,
+			    LC_POLY1305_TAGLEN);
 			fprintf(stderr, "\n");
 		}
 		puts("invalid");
@@ -287,7 +288,7 @@ main(int argc, char *argv[])
 	memcpy(buf, ct, ctlen);
 	memcpy(buf + ctlen, tag, taglen);
 
-	if (!lc_aead_open(impl, key, keylenarg, iv, ivlenarg, NULL, &decoutlen,
+	if (!lc_aead_open(impl, NULL, &decoutlen, key, keylenarg, iv, ivlenarg,
 	    aad, aadlen, buf, ctlen + taglen)) {
 		puts("invalid");
 		return 1;
@@ -295,8 +296,8 @@ main(int argc, char *argv[])
 	decout = malloc(decoutlen);
 	if (encout == NULL)
 		err(1, "out of memory");
-	if (!lc_aead_open(impl, key, keylenarg, iv, ivlenarg, decout,
-	    &decoutlen, aad, aadlen, buf, ctlen + taglen)) {
+	if (!lc_aead_open(impl, decout, &decoutlen, key, keylenarg, iv,
+	    ivlenarg, aad, aadlen, buf, ctlen + taglen)) {
 		puts("invalid");
 		return 1;
 	}

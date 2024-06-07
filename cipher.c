@@ -42,11 +42,11 @@ lc_cipher_encrypt_final(struct lc_cipher_ctx *ctx, uint8_t *out,
 }
 
 int
-lc_cipher_encrypt(const struct lc_cipher_impl *impl, const uint8_t *key,
-    size_t keylen, const uint8_t *iv, size_t ivlen, uint8_t *out,
-    size_t *outlen, const uint8_t *in, size_t inlen)
+lc_cipher_encrypt(const struct lc_cipher_impl *impl, uint8_t *out,
+    size_t *outlen, const uint8_t *key, size_t keylen, const uint8_t *iv,
+    size_t ivlen, const uint8_t *in, size_t inlen)
 {
-	return impl->encrypt(key, keylen, iv, ivlen, out, outlen, in, inlen);
+	return impl->encrypt(out, outlen, key, keylen, iv, ivlen, in, inlen);
 }
 
 int
@@ -71,11 +71,11 @@ lc_cipher_decrypt_final(struct lc_cipher_ctx *ctx, uint8_t *out,
 }
 
 int
-lc_cipher_decrypt(const struct lc_cipher_impl *impl, const uint8_t *key,
-    size_t keylen, const uint8_t *iv, size_t ivlen, uint8_t *out,
-    size_t *outlen, const uint8_t *in, size_t inlen)
+lc_cipher_decrypt(const struct lc_cipher_impl *impl, uint8_t *out,
+    size_t *outlen, const uint8_t *key, size_t keylen, const uint8_t *iv,
+    size_t ivlen, const uint8_t *in, size_t inlen)
 {
-	return impl->decrypt(key, keylen, iv, ivlen, out, outlen, in, inlen);
+	return impl->decrypt(out, outlen, key, keylen, iv, ivlen, in, inlen);
 }
 
 struct lc_cipher_ctx *

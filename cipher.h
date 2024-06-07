@@ -24,16 +24,16 @@ struct lc_cipher_impl {
 	int	 (*encrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
 		    size_t);
 	int	 (*encrypt_final)(void *, uint8_t *, size_t *);
-	int	 (*encrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
-		    uint8_t *, size_t *, const uint8_t *, size_t);
+	int	 (*encrypt)(uint8_t *, size_t *, const uint8_t *, size_t,
+		    const uint8_t *, size_t, const uint8_t *, size_t);
 
 	int	 (*decrypt_init)(void *, const uint8_t *, size_t,
 		    const uint8_t *, size_t);
 	int	 (*decrypt_update)(void *, uint8_t *, size_t *, const uint8_t *,
 		    size_t);
 	int	 (*decrypt_final)(void *, uint8_t *, size_t *);
-	int	 (*decrypt)(const uint8_t *, size_t, const uint8_t *, size_t,
-		    uint8_t *, size_t *, const uint8_t *, size_t);
+	int	 (*decrypt)(uint8_t *, size_t *, const uint8_t *, size_t,
+		    const uint8_t *, size_t, const uint8_t *, size_t);
 
 	void	*(*ctx_new)(void);
 	void	 (*ctx_free)(void *);

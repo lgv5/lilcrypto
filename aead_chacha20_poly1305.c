@@ -25,14 +25,16 @@
 
 
 /*
- * Implements ChaCha20-Poly1305 according to RFC 8439.
+ * Implements ChaCha20-Poly1305 according to RFC 8439, XChaCha20-Poly1305
+ * according to draft-irtf-cfrg-xchacha-03.
  */
 
-static uint8_t	zeropad[16];
+static const uint8_t	zeropad[16];
+
 
 static int
-chacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, uint8_t *out, size_t *outlen, const uint8_t *aad,
+chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const uint8_t *key,
+    size_t keylen, const uint8_t *iv, size_t ivlen, const uint8_t *aad,
     size_t aadlen, const uint8_t *in, size_t inlen)
 {
 	struct chacha20_ctx	cctx;
@@ -102,8 +104,8 @@ chacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
 }
 
 static int
-chacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, uint8_t *out, size_t *outlen, const uint8_t *aad,
+chacha20_poly1305_open(uint8_t *out, size_t *outlen, const uint8_t *key,
+    size_t keylen, const uint8_t *iv, size_t ivlen, const uint8_t *aad,
     size_t aadlen, const uint8_t *in, size_t inlen)
 {
 	const uint8_t		*tagp;
@@ -181,8 +183,8 @@ chacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
 }
 
 static int
-xchacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, uint8_t *out, size_t *outlen, const uint8_t *aad,
+xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, const uint8_t *key,
+    size_t keylen, const uint8_t *iv, size_t ivlen, const uint8_t *aad,
     size_t aadlen, const uint8_t *in, size_t inlen)
 {
 	struct chacha20_ctx	cctx;
@@ -252,8 +254,8 @@ xchacha20_poly1305_seal(const uint8_t *key, size_t keylen, const uint8_t *iv,
 }
 
 static int
-xchacha20_poly1305_open(const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, uint8_t *out, size_t *outlen, const uint8_t *aad,
+xchacha20_poly1305_open(uint8_t *out, size_t *outlen, const uint8_t *key,
+    size_t keylen, const uint8_t *iv, size_t ivlen, const uint8_t *aad,
     size_t aadlen, const uint8_t *in, size_t inlen)
 {
 	const uint8_t		*tagp;
@@ -346,6 +348,7 @@ lc_aead_impl_chacha20_poly1305(void)
 {
 	return &chacha20_poly1305_impl;
 }
+
 const struct lc_aead_impl *
 lc_aead_impl_xchacha20_poly1305(void)
 {

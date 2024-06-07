@@ -40,10 +40,10 @@ lc_auth_final(struct lc_auth_ctx *ctx, uint8_t *out, size_t *outlen)
 }
 
 int
-lc_auth(const struct lc_auth_impl *impl, const uint8_t *key, size_t keylen,
-    uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
+lc_auth(const struct lc_auth_impl *impl, uint8_t *out, size_t *outlen,
+    const uint8_t *key, size_t keylen, const uint8_t *in, size_t inlen)
 {
-	return impl->auth(key, keylen, out, outlen, in, inlen);
+	return impl->auth(out, outlen, key, keylen, in, inlen);
 }
 
 struct lc_auth_ctx *

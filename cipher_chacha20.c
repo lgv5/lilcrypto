@@ -193,8 +193,8 @@ chacha20_common_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 int
-chacha20_common(const uint8_t *key, size_t keylen, const uint8_t *iv,
-    size_t ivlen, uint8_t *out, size_t *outlen, const uint8_t *in,
+chacha20_common(uint8_t *out, size_t *outlen, const uint8_t *key,
+    size_t keylen, const uint8_t *iv, size_t ivlen, const uint8_t *in,
     size_t inlen)
 {
 	struct chacha20_ctx	ctx;
