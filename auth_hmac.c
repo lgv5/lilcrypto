@@ -19,7 +19,6 @@
 #include "lilcrypto.h"
 #include "auth.h"
 #include "hash.h"
-#include "auth_hmac.h"
 #include "impl_hmac.h"
 #include "impl_sha256.h"
 #include "impl_sha512.h"
@@ -58,27 +57,29 @@ hmac_common_init(void *arg, const uint8_t *key, size_t keylen)
 	    lc_hash_update(ctx->hctx, ikeypad, ctx->blocksz);
 }
 
-int
-hmac_sha224_sha256_init(void *arg, const uint8_t *key, size_t keylen)
+static int
+hmac_sha224_sha256_init(void *arg, const void *initparams)
 {
-	struct hmac_ctx	*ctx = arg;
+	const struct lc_hmac_params	*params = initparams;
+	struct hmac_ctx			*ctx = arg;
 
 	ctx->blocksz = SHA256_CHUNK;
 
-	return hmac_common_init(ctx, key, keylen);
+	return hmac_common_init(ctx, params->key, params->keylen);
 }
 
-int
-hmac_sha384_sha512_init(void *arg, const uint8_t *key, size_t keylen)
+static int
+hmac_sha384_sha512_init(void *arg, const void *initparams)
 {
-	struct hmac_ctx	*ctx = arg;
+	const struct lc_hmac_params	*params = initparams;
+	struct hmac_ctx			*ctx = arg;
 
 	ctx->blocksz = SHA512_CHUNK;
 
-	return hmac_common_init(ctx, key, keylen);
+	return hmac_common_init(ctx, params->key, params->keylen);
 }
 
-int
+static int
 hmac_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	struct hmac_ctx	*ctx = arg;
@@ -86,14 +87,15 @@ hmac_update(void *arg, const uint8_t *in, size_t inlen)
 	return lc_hash_update(ctx->hctx, in, inlen);
 }
 
-int
+static int
 hmac_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct hmac_ctx		*ctx = arg;
 	struct lc_hash_ctx	*hctx;
-	uint8_t		 m[HMAC_BLOCKSZ_MAX], okeypad[HMAC_BLOCKSZ_MAX];
-	size_t		 i, olen;
-	int		 rc;
+	uint8_t			 m[HMAC_BLOCKSZ_MAX],
+				    okeypad[HMAC_BLOCKSZ_MAX];
+	size_t			 i, olen;
+	int			 rc;
 
 	if (out == NULL) {
 		(void)lc_hash_final(ctx->hctx, NULL, outlen);

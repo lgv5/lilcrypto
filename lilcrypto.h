@@ -123,11 +123,11 @@ struct lc_auth_ctx;
 struct lc_auth_impl;
 
 
-int	lc_auth_init(struct lc_auth_ctx *, const uint8_t *, size_t);
+int	lc_auth_init(struct lc_auth_ctx *, const void *);
 int	lc_auth_update(struct lc_auth_ctx *, const uint8_t *, size_t);
 int	lc_auth_final(struct lc_auth_ctx *, uint8_t *, size_t *);
 int	lc_auth(const struct lc_auth_impl *, uint8_t *, size_t *,
-	    const uint8_t *, size_t, const uint8_t *, size_t);
+	    const void *, const uint8_t *, size_t);
 
 struct lc_auth_ctx	*lc_auth_ctx_new(const struct lc_auth_impl *);
 void			 lc_auth_ctx_free(struct lc_auth_ctx *);

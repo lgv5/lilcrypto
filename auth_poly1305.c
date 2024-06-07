@@ -18,21 +18,18 @@
 
 #include "lilcrypto.h"
 #include "auth.h"
-#include "auth_poly1305.h"
 #include "impl_poly1305.h"
 
 #include "util.h"
 
 
-int
-poly1305_init(void *arg, const uint8_t *key, size_t keylen)
+static int
+poly1305_init(void *arg, const void *initparams)
 {
-	struct poly1305_ctx	*ctx = arg;
-	size_t			 i;
-	uint32_t		 t0, t1, t2, t3;
-
-	if (keylen != LC_POLY1305_KEYLEN)
-		return 0;
+	const struct lc_poly1305_params	*params = initparams;
+	struct poly1305_ctx		*ctx = arg;
+	size_t				 i;
+	uint32_t			 t0, t1, t2, t3;
 
 	ctx->h0 = 0;
 	ctx->h1 = 0;
@@ -40,10 +37,10 @@ poly1305_init(void *arg, const uint8_t *key, size_t keylen)
 	ctx->h3 = 0;
 	ctx->h4 = 0;
 
-	t0 = load32le(&key[0]);
-	t1 = load32le(&key[4]);
-	t2 = load32le(&key[8]);
-	t3 = load32le(&key[12]);
+	t0 = load32le(&params->key[0]);
+	t1 = load32le(&params->key[4]);
+	t2 = load32le(&params->key[8]);
+	t3 = load32le(&params->key[12]);
 
 	ctx->r0 = t0 & 0x3ffffff;
 	ctx->r1 = ((t1 << 6) | (t0 >> 26)) & 0x3ffff03;
@@ -56,10 +53,10 @@ poly1305_init(void *arg, const uint8_t *key, size_t keylen)
 	ctx->x3 = 5 * ctx->r3;
 	ctx->x4 = 5 * ctx->r4;
 
-	ctx->s0 = load32le(&key[16]);
-	ctx->s1 = load32le(&key[20]);
-	ctx->s2 = load32le(&key[24]);
-	ctx->s3 = load32le(&key[28]);
+	ctx->s0 = load32le(&params->key[16]);
+	ctx->s1 = load32le(&params->key[20]);
+	ctx->s2 = load32le(&params->key[24]);
+	ctx->s3 = load32le(&params->key[28]);
 
 	ctx->mlen = 0;
 	for (i = 0; i < POLY1305_CHUNK; i++)
@@ -68,7 +65,7 @@ poly1305_init(void *arg, const uint8_t *key, size_t keylen)
 	return 1;
 }
 
-int
+static int
 poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	struct poly1305_ctx	*ctx = arg;
@@ -104,7 +101,7 @@ poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 	return 1;
 }
 
-int
+static int
 poly1305_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct poly1305_ctx	*ctx = arg;
@@ -138,7 +135,7 @@ poly1305_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 static int
-poly1305_auth(uint8_t *out, size_t *outlen, const uint8_t *key, size_t keylen,
+poly1305_auth(uint8_t *out, size_t *outlen, const void *initparams,
     const uint8_t *in, size_t inlen)
 {
 	struct poly1305_ctx	ctx;
@@ -148,7 +145,7 @@ poly1305_auth(uint8_t *out, size_t *outlen, const uint8_t *key, size_t keylen,
 		return 1;
 	}
 
-	return poly1305_init(&ctx, key, keylen) &&
+	return poly1305_init(&ctx, initparams) &&
 	    poly1305_update(&ctx, in, inlen) &&
 	    poly1305_final(&ctx, out, outlen);
 }
