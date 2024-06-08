@@ -31,7 +31,7 @@
 
 
 static int
-chacha20_common_init(void *arg, const void *initparams)
+chacha20_anycrypt_init(void *arg, const void *initparams)
 {
 	const struct lc_chacha20_params	*params = initparams;
 	struct chacha20_ctx		*ctx = arg;
@@ -50,7 +50,7 @@ chacha20_common_init(void *arg, const void *initparams)
 }
 
 static int
-xchacha20_common_init(void *arg, const void *initparams)
+xchacha20_anycrypt_init(void *arg, const void *initparams)
 {
 	const struct lc_xchacha20_params	*params = initparams;
 	struct chacha20_ctx			*ctx = arg;
@@ -83,7 +83,7 @@ xchacha20_common_init(void *arg, const void *initparams)
 }
 
 static int
-chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
+chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
     const uint8_t *in, size_t inlen)
 {
 	struct chacha20_ctx	*ctx = arg;
@@ -145,7 +145,7 @@ chacha20_common_update(void *arg, uint8_t *out, size_t *outlen,
 }
 
 static int
-chacha20_common_final(void *arg, uint8_t *out, size_t *outlen)
+chacha20_anycrypt_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct chacha20_ctx	*ctx = arg;
 	size_t			 i, off;
@@ -178,7 +178,7 @@ chacha20_common_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 static int
-chacha20_common(uint8_t *out, size_t *outlen, const void *initparams,
+chacha20_anycrypt(uint8_t *out, size_t *outlen, const void *initparams,
     const uint8_t *in, size_t inlen)
 {
 	struct chacha20_ctx	ctx;
@@ -196,9 +196,9 @@ chacha20_common(uint8_t *out, size_t *outlen, const void *initparams,
 		return 1;
 	}
 
-	rc = chacha20_common_init(&ctx, initparams) &&
-	    chacha20_common_update(&ctx, out, &l0, in, inlen) &&
-	    chacha20_common_final(&ctx, out + l0, &l1);
+	rc = chacha20_anycrypt_init(&ctx, initparams) &&
+	    chacha20_anycrypt_update(&ctx, out, &l0, in, inlen) &&
+	    chacha20_anycrypt_final(&ctx, out + l0, &l1);
 
 	if (rc)
 		*outlen = l0 + l1;
@@ -214,30 +214,30 @@ chacha20_ctx_new(void)
 
 
 static struct lc_cipher_impl	chacha20_impl = {
-	.encrypt_init = &chacha20_common_init,
-	.encrypt_update = &chacha20_common_update,
-	.encrypt_final = &chacha20_common_final,
-	.encrypt = &chacha20_common,
+	.encrypt_init = &chacha20_anycrypt_init,
+	.encrypt_update = &chacha20_anycrypt_update,
+	.encrypt_final = &chacha20_anycrypt_final,
+	.encrypt = &chacha20_anycrypt,
 
-	.decrypt_init = &chacha20_common_init,
-	.decrypt_update = &chacha20_common_update,
-	.decrypt_final = &chacha20_common_final,
-	.decrypt = &chacha20_common,
+	.decrypt_init = &chacha20_anycrypt_init,
+	.decrypt_update = &chacha20_anycrypt_update,
+	.decrypt_final = &chacha20_anycrypt_final,
+	.decrypt = &chacha20_anycrypt,
 
 	.ctx_new = &chacha20_ctx_new,
 	.ctx_free = NULL,
 };
 
 static struct lc_cipher_impl	xchacha20_impl = {
-	.encrypt_init = &xchacha20_common_init,
-	.encrypt_update = &chacha20_common_update,
-	.encrypt_final = &chacha20_common_final,
-	.encrypt = &chacha20_common,
+	.encrypt_init = &xchacha20_anycrypt_init,
+	.encrypt_update = &chacha20_anycrypt_update,
+	.encrypt_final = &chacha20_anycrypt_final,
+	.encrypt = &chacha20_anycrypt,
 
-	.decrypt_init = &xchacha20_common_init,
-	.decrypt_update = &chacha20_common_update,
-	.decrypt_final = &chacha20_common_final,
-	.decrypt = &chacha20_common,
+	.decrypt_init = &xchacha20_anycrypt_init,
+	.decrypt_update = &chacha20_anycrypt_update,
+	.decrypt_final = &chacha20_anycrypt_final,
+	.decrypt = &chacha20_anycrypt,
 
 	.ctx_new = &chacha20_ctx_new,
 	.ctx_free = NULL,
