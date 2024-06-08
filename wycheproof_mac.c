@@ -60,9 +60,97 @@ hexparse(const char *s, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
+struct testcase {
+	uint8_t	*key;
+	size_t	 keylen;
+	size_t	 keylenarg;
+	uint8_t	*tag;
+	size_t	 taglen;
+	size_t	 taglenarg;
+	uint8_t	*msg;
+	size_t	 msglen;
+};
+
+static int
+hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
+    int verbose)
+{
+	struct lc_hmac_params	 params;
+	struct lc_auth_ctx	*ctx;
+	uint8_t			*buf;
+	size_t			 olen;
+
+	if (c->keylen != c->keylenarg)
+		return 0;
+	params.key = c->key;
+	params.keylen = c->keylen;
+
+	ctx = lc_auth_ctx_new(impl);
+	if (ctx == NULL)
+		errx(1, "can't allocate ctx");
+
+	if (!lc_auth_init(ctx, &params) ||
+	    !lc_auth_update(ctx, c->msg, c->msglen) ||
+	    !lc_auth_final(ctx, NULL, &olen))
+		return 0;
+
+	buf = malloc(olen);
+	if (buf == NULL)
+		err(1, "out of memory");
+
+	if (!lc_auth_final(ctx, buf, &olen))
+		return 0;
+
+	/*
+	 * Tests include truncated output. Skip checking olen as it'll always
+	 * be the full-length hash.
+	 */
+	if (c->taglen != c->taglenarg ||
+	    !lc_ct_cmp(buf, c->tag, c->taglen)) {
+		if (verbose) {
+			fprintf(stderr, "tag (%zu, %zu, %zu)\n", c->taglen,
+			    c->taglenarg, olen);
+			lc_hexdump_fp(stderr, c->tag, c->taglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, buf, olen);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+
+	free(buf);
+	lc_auth_ctx_free(ctx);
+
+	return 1;
+}
+
+static int
+hmac_sha224_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha224(), c, verbose);
+}
+
+static int
+hmac_sha256_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha256(), c, verbose);
+}
+
+static int
+hmac_sha384_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha384(), c, verbose);
+}
+
+static int
+hmac_sha512_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha512(), c, verbose);
+}
+
 struct kwimpl {
-	const char			*kw;
-	const struct lc_auth_impl	*(*impl)(void);
+	const char	 *kw;
+	int		(*runner)(const struct testcase *, int);
 };
 
 static int
@@ -74,22 +162,22 @@ kwimpl_cmp(const void *k0, const void *h0)
 	return strcmp(k, h->kw);
 }
 
-static const struct lc_auth_impl *
-kw2impl(const char *s)
+static int
+(*kw2impl(const char *s))(const struct testcase *, int)
 {
 	/* Needs to be sorted. */
 	static const struct kwimpl	tbl[] = {
-		{ "HMACSHA224", &lc_auth_impl_hmac_sha224 },
-		{ "HMACSHA256", &lc_auth_impl_hmac_sha256 },
-		{ "HMACSHA384", &lc_auth_impl_hmac_sha384 },
-		{ "HMACSHA512", &lc_auth_impl_hmac_sha512 },
+		{ "HMACSHA224", &hmac_sha224_runner },
+		{ "HMACSHA256", &hmac_sha256_runner },
+		{ "HMACSHA384", &hmac_sha384_runner },
+		{ "HMACSHA512", &hmac_sha512_runner },
 	};
 	struct kwimpl	*match;
 
 	match = bsearch(s, tbl, nelems(tbl), sizeof(struct kwimpl),
 	    &kwimpl_cmp);
 
-	return match != NULL ? match->impl() : NULL;
+	return match != NULL ? match->runner : NULL;
 }
 
 static void
@@ -102,21 +190,18 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	const struct lc_auth_impl	*impl;
-	struct lc_auth_ctx		*ctx;
-	uint8_t		*key, *msg, *tag, *buf;
-	const char	*errstr;
-	size_t		 keylen, msglen, taglen;
-	size_t		 keylenarg, taglenarg;
-	size_t		 l, olen;
-	int		 Kflag, kflag, mflag, Tflag, tflag;
-	int		 ch, verbose;
+	int		(*runner)(const struct testcase *, int);
+	const char	 *errstr;
+	struct testcase	  c;
+	size_t		  l;
+	int		  Kflag, kflag, mflag, Tflag, tflag;
+	int		  ch, verbose;
 
 	if (argc < 2)
 		usage();
 
-	impl = kw2impl(argv[1]);
-	if (impl == NULL)
+	runner = kw2impl(argv[1]);
+	if (runner == NULL)
 		errx(1, "unsupported algorithm: %s", argv[1]);
 
 	optind = 2;
@@ -126,54 +211,54 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'K':
 			Kflag = 1;
-			keylenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			c.keylenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "keylen is %s: %s", errstr, optarg);
-			if (keylenarg % 8 != 0)
-				errx(1, "unsupport K value: %zu", keylenarg);
-			keylenarg /= 8;
+			if (c.keylenarg % 8 != 0)
+				errx(1, "unsupport K value: %zu", c.keylenarg);
+			c.keylenarg /= 8;
 			break;
 		case 'k':
 			kflag = 1;
-			(void)hexparse(optarg, NULL, &keylen);
-			if (keylen != 0) {
-				key = malloc(keylen);
-				if (key == NULL)
+			(void)hexparse(optarg, NULL, &c.keylen);
+			if (c.keylen != 0) {
+				c.key = malloc(c.keylen);
+				if (c.key == NULL)
 					err(1, "out of memory");
 			} else
-				key = NULL;
-			if (!hexparse(optarg, key, &l) || l != keylen)
+				c.key = NULL;
+			if (!hexparse(optarg, c.key, &l) || l != c.keylen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'm':
 			mflag = 1;
-			(void)hexparse(optarg, NULL, &msglen);
-			if (msglen != 0) {
-				msg = malloc(msglen);
-				if (msg == NULL)
+			(void)hexparse(optarg, NULL, &c.msglen);
+			if (c.msglen != 0) {
+				c.msg = malloc(c.msglen);
+				if (c.msg == NULL)
 					err(1, "out of memory");
 			} else
-				msg = NULL;
-			if (!hexparse(optarg, msg, &l) || l != msglen)
+				c.msg = NULL;
+			if (!hexparse(optarg, c.msg, &l) || l != c.msglen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'T':
 			Tflag = 1;
-			taglenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			c.taglenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "taglen is %s: %s", errstr, optarg);
-			taglenarg /= 8;
+			c.taglenarg /= 8;
 			break;
 		case 't':
 			tflag = 1;
-			(void)hexparse(optarg, NULL, &taglen);
-			if (taglen != 0) {
-				tag = malloc(taglen);
-				if (tag == NULL)
+			(void)hexparse(optarg, NULL, &c.taglen);
+			if (c.taglen != 0) {
+				c.tag = malloc(c.taglen);
+				if (c.tag == NULL)
 					err(1, "out of memory");
 			} else
-				tag = NULL;
-			if (!hexparse(optarg, tag, &l) || l != taglen)
+				c.tag = NULL;
+			if (!hexparse(optarg, c.tag, &l) || l != c.taglen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'v':
@@ -190,45 +275,13 @@ main(int argc, char *argv[])
 	if (!(Kflag && kflag && mflag && Tflag && tflag))
 		errx(1, "missing required arguments");
 
-	ctx = lc_auth_ctx_new(impl);
-	if (ctx == NULL)
-		errx(1, "can't allocate ctx");
-	if (!lc_auth_init(ctx, key, keylenarg) ||
-	    !lc_auth_update(ctx, msg, msglen) ||
-	    !lc_auth_final(ctx, NULL, &olen)) {
+	if (runner(&c, verbose)) {
+		puts("valid");
+		return 0;
+	} else {
 		puts("invalid");
-		return 1;
+		return 0;
 	}
-
-	buf = malloc(olen);
-	if (buf == NULL)
-		err(1, "out of memory");
-
-	if (!lc_auth_final(ctx, buf, &olen)) {
-		puts("invalid");
-		return 1;
-	}
-
-	/*
-	 * Tests include truncated output. Skip checking olen as it'll always
-	 * be the full-length hash.
-	 */
-	if (taglen != taglenarg ||
-	    !lc_ct_cmp(buf, tag, taglen)) {
-		if (verbose) {
-			fprintf(stderr, "tag (%zu, %zu, %zu)\n", taglen,
-			    taglenarg, olen);
-			lc_hexdump_fp(stderr, tag, taglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, buf, olen);
-			fprintf(stderr, "\n");
-		}
-		puts("invalid");
-		return 1;
-	}
-
-	free(buf);
-	lc_auth_ctx_free(ctx);
 
 	puts("valid");
 	return 0;

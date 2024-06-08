@@ -60,9 +60,148 @@ hexparse(const char *s, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
+struct testcase {
+	uint8_t	*key;
+	size_t	 keylen;
+	size_t	 keylenarg;
+	uint8_t	*iv;
+	size_t	 ivlen;
+	size_t	 ivlenarg;
+	uint8_t	*tag;
+	size_t	 taglen;
+	size_t	 taglenarg;
+	uint8_t	*aad;
+	size_t	 aadlen;
+	uint8_t	*msg;
+	size_t	 msglen;
+	uint8_t *ct;
+	size_t	 ctlen;
+};
+
+static int
+aead_poly1305_runner(const struct lc_aead_impl *impl, const struct testcase *c,
+    const void *params, int verbose)
+{
+	uint8_t	*buf, *encout, *decout;
+	size_t	 aeadlen, encoutlen, decoutlen;
+
+	if (!lc_aead_seal(impl, NULL, &encoutlen, params, c->aad, c->aadlen,
+	    c->msg, c->msglen))
+		return 0;
+	encout = malloc(encoutlen);
+	if (encout == NULL)
+		err(1, "out of memory");
+	if (!lc_aead_seal(impl, encout, &encoutlen, params, c->aad, c->aadlen,
+	    c->msg, c->msglen))
+		return 0;
+
+	if (c->ctlen != encoutlen - LC_POLY1305_TAGLEN ||
+	    !lc_ct_cmp(encout, c->ct, c->ctlen)) {
+		if (verbose) {
+			fprintf(stderr, "ct (%zu, %zu)\n", c->ctlen,
+			    encoutlen - LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, c->msg, c->msglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, c->ct, c->ctlen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, encout,
+			    encoutlen - LC_POLY1305_TAGLEN);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+	if (c->taglenarg != LC_POLY1305_TAGLEN ||
+	    !lc_ct_cmp(encout + c->ctlen, c->tag, LC_POLY1305_TAGLEN)) {
+		if (verbose) {
+			fprintf(stderr, "tag (%zu, %zu)\n", c->taglenarg,
+			    (size_t)LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, c->tag, c->taglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, encout + c->ctlen,
+			    LC_POLY1305_TAGLEN);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+
+	/* Decryption. */
+
+	aeadlen = c->msglen + c->taglen;
+	buf = malloc(aeadlen);
+	if (buf == NULL)
+		err(1, "out of memory");
+	memcpy(buf, c->ct, c->ctlen);
+	memcpy(buf + c->ctlen, c->tag, c->taglen);
+
+	if (!lc_aead_open(impl, NULL, &decoutlen, params, c->aad, c->aadlen,
+	    buf, aeadlen))
+		return 0;
+	decout = malloc(decoutlen);
+	if (decout == NULL)
+		err(1, "out of memory");
+	if (!lc_aead_open(impl, decout, &decoutlen, params, c->aad, c->aadlen,
+	    buf, aeadlen))
+		return 0;
+
+	if (c->msglen != decoutlen || !lc_ct_cmp(decout, c->msg, c->msglen)) {
+		if (verbose) {
+			fprintf(stderr, "ct (%zu, %zu)\n", c->msglen,
+			    decoutlen);
+			lc_hexdump_fp(stderr, c->msg, c->msglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, c->ct, c->ctlen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, decout, decoutlen);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+	/* Tag isn't checked, as it's already validated by lc_aead_open. */
+
+	return 1;
+}
+
+static int
+chacha20_poly1305_runner(const struct testcase *c, int verbose)
+{
+	struct lc_chacha20_poly1305_params	params;
+
+	if (c->keylenarg != LC_CHACHA20_KEYLEN ||
+	    c->keylen != LC_CHACHA20_KEYLEN)
+		return 0;
+	memcpy(params.key, c->key, LC_CHACHA20_KEYLEN);
+
+	if (c->ivlenarg != LC_CHACHA20_NONCELEN ||
+	    c->ivlen != LC_CHACHA20_NONCELEN)
+		return 0;
+	memcpy(params.nonce, c->iv, LC_CHACHA20_NONCELEN);
+
+	return aead_poly1305_runner(lc_aead_impl_chacha20_poly1305(), c,
+	    &params, verbose);
+}
+
+static int
+xchacha20_poly1305_runner(const struct testcase *c, int verbose)
+{
+	struct lc_xchacha20_poly1305_params	params;
+
+	if (c->keylenarg != LC_XCHACHA20_KEYLEN ||
+	    c->keylen != LC_XCHACHA20_KEYLEN)
+		return 0;
+	memcpy(params.key, c->key, LC_XCHACHA20_KEYLEN);
+
+	if (c->ivlenarg != LC_XCHACHA20_NONCELEN ||
+	    c->ivlen != LC_XCHACHA20_NONCELEN)
+		return 0;
+	memcpy(params.nonce, c->iv, LC_XCHACHA20_NONCELEN);
+
+	return aead_poly1305_runner(lc_aead_impl_xchacha20_poly1305(), c,
+	    &params, verbose);
+}
+
 struct kwimpl {
-	const char			*kw;
-	const struct lc_aead_impl	*(*impl)(void);
+	const char	 *kw;
+	int		(*runner)(const struct testcase *, int);
 };
 
 static int
@@ -74,19 +213,19 @@ kwimpl_cmp(const void *k0, const void *h0)
 	return strcmp(k, h->kw);
 }
 
-static const struct lc_aead_impl *
-kw2impl(const char *s)
+static int
+(*kw2impl(const char *s))(const struct testcase *, int)
 {
 	static const struct kwimpl	tbl[] = {
-		{ "CHACHA20-POLY1305", &lc_aead_impl_chacha20_poly1305 },
-		{ "XCHACHA20-POLY1305", &lc_aead_impl_xchacha20_poly1305 },
+		{ "CHACHA20-POLY1305", &chacha20_poly1305_runner },
+		{ "XCHACHA20-POLY1305", &xchacha20_poly1305_runner },
 	};
 	struct kwimpl	*match;
 
 	match = bsearch(s, tbl, nelems(tbl), sizeof(struct kwimpl),
 	    &kwimpl_cmp);
 
-	return match != NULL ? match->impl() : NULL;
+	return match != NULL ? match->runner : NULL;
 }
 
 static void
@@ -99,22 +238,19 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	const struct lc_aead_impl	*impl;
-	uint8_t		*aad, *ct, *iv, *key, *msg, *tag, *encout, *decout,
-			    *buf;
-	const char	*errstr;
-	size_t		 aadlen, ctlen, ivlen, keylen, msglen, taglen;
-	size_t		 ivlenarg, keylenarg, taglenarg;
-	size_t		 l, encoutlen, decoutlen;
-	int		 aflag, cflag, Iflag, iflag, Kflag, kflag, mflag,
+	int		(*runner)(const struct testcase *, int);
+	const char	 *errstr;
+	struct testcase	  c;
+	size_t		  l;
+	int		  aflag, cflag, Iflag, iflag, Kflag, kflag, mflag,
 			    Tflag, tflag;
-	int		 ch, verbose;
+	int		  ch, verbose;
 
 	if (argc < 2)
 		usage();
 
-	impl = kw2impl(argv[1]);
-	if (impl == NULL)
+	runner = kw2impl(argv[1]);
+	if (runner == NULL)
 		errx(1, "unsupported algorithm: %s", argv[1]);
 
 	optind = 2;
@@ -125,97 +261,97 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'a':
 			aflag = 1;
-			(void)hexparse(optarg, NULL, &aadlen);
-			if (aadlen != 0) {
-				aad = malloc(aadlen);
-				if (aad == NULL)
+			(void)hexparse(optarg, NULL, &c.aadlen);
+			if (c.aadlen != 0) {
+				c.aad = malloc(c.aadlen);
+				if (c.aad == NULL)
 					err(1, "out of memory");
 			} else
-				aad = NULL;
-			if (!hexparse(optarg, aad, &l) || l != aadlen)
+				c.aad = NULL;
+			if (!hexparse(optarg, c.aad, &l) || l != c.aadlen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'c':
 			cflag = 1;
-			(void)hexparse(optarg, NULL, &ctlen);
-			if (ctlen != 0) {
-				ct = malloc(ctlen);
-				if (ct == NULL)
+			(void)hexparse(optarg, NULL, &c.ctlen);
+			if (c.ctlen != 0) {
+				c.ct = malloc(c.ctlen);
+				if (c.ct == NULL)
 					err(1, "out of memory");
 			} else
-				ct = NULL;
-			if (!hexparse(optarg, ct, &l) || l != ctlen)
+				c.ct = NULL;
+			if (!hexparse(optarg, c.ct, &l) || l != c.ctlen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'I':
 			Iflag = 1;
-			ivlenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			c.ivlenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "ivlen is %s: %s", errstr, optarg);
-			ivlenarg /= 8;
+			c.ivlenarg /= 8;
 			break;
 		case 'i':
 			iflag = 1;
-			(void)hexparse(optarg, NULL, &ivlen);
-			if (ivlen != 0) {
-				iv = malloc(ivlen);
-				if (iv == NULL)
+			(void)hexparse(optarg, NULL, &c.ivlen);
+			if (c.ivlen != 0) {
+				c.iv = malloc(c.ivlen);
+				if (c.iv == NULL)
 					err(1, "out of memory");
 			} else
-				iv = NULL;
-			if (!hexparse(optarg, iv, &l) || l != ivlen)
+				c.iv = NULL;
+			if (!hexparse(optarg, c.iv, &l) || l != c.ivlen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'K':
 			Kflag = 1;
-			keylenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			c.keylenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "keylen is %s: %s", errstr, optarg);
-			if (keylenarg % 8 != 0)
-				errx(1, "unsupport K value: %zu", keylenarg);
-			keylenarg /= 8;
+			if (c.keylenarg % 8 != 0)
+				errx(1, "unsupport K value: %zu", c.keylenarg);
+			c.keylenarg /= 8;
 			break;
 		case 'k':
 			kflag = 1;
-			(void)hexparse(optarg, NULL, &keylen);
-			if (keylen != 0) {
-				key = malloc(keylen);
-				if (key == NULL)
+			(void)hexparse(optarg, NULL, &c.keylen);
+			if (c.keylen != 0) {
+				c.key = malloc(c.keylen);
+				if (c.key == NULL)
 					err(1, "out of memory");
 			} else
-				key = NULL;
-			if (!hexparse(optarg, key, &l) || l != keylen)
+				c.key = NULL;
+			if (!hexparse(optarg, c.key, &l) || l != c.keylen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'm':
 			mflag = 1;
-			(void)hexparse(optarg, NULL, &msglen);
-			if (msglen != 0) {
-				msg = malloc(msglen);
-				if (msg == NULL)
+			(void)hexparse(optarg, NULL, &c.msglen);
+			if (c.msglen != 0) {
+				c.msg = malloc(c.msglen);
+				if (c.msg == NULL)
 					err(1, "out of memory");
 			} else
-				msg = NULL;
-			if (!hexparse(optarg, msg, &l) || l != msglen)
+				c.msg = NULL;
+			if (!hexparse(optarg, c.msg, &l) || l != c.msglen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'T':
 			Tflag = 1;
-			taglenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			c.taglenarg = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "taglen is %s: %s", errstr, optarg);
-			taglenarg /= 8;
+			c.taglenarg /= 8;
 			break;
 		case 't':
 			tflag = 1;
-			(void)hexparse(optarg, NULL, &taglen);
-			if (taglen != 0) {
-				tag = malloc(taglen);
-				if (tag == NULL)
+			(void)hexparse(optarg, NULL, &c.taglen);
+			if (c.taglen != 0) {
+				c.tag = malloc(c.taglen);
+				if (c.tag == NULL)
 					err(1, "out of memory");
 			} else
-				tag = NULL;
-			if (!hexparse(optarg, tag, &l) || l != taglen)
+				c.tag = NULL;
+			if (!hexparse(optarg, c.tag, &l) || l != c.taglen)
 				errx(1, "invalid hex string: %s", optarg);
 			break;
 		case 'v':
@@ -233,90 +369,11 @@ main(int argc, char *argv[])
 	    Tflag && tflag))
 		errx(1, "missing required arguments");
 
-	/* Encryption. */
-
-	if (!lc_aead_seal(impl, NULL, &encoutlen, key, keylenarg, iv, ivlenarg,
-	    aad, aadlen, msg, msglen)) {
+	if (runner(&c, verbose)) {
+		puts("valid");
+		return 0;
+	} else {
 		puts("invalid");
-		return 1;
+		return 0;
 	}
-	encout = malloc(encoutlen);
-	if (encout == NULL)
-		err(1, "out of memory");
-	if (!lc_aead_seal(impl, encout, &encoutlen, key, keylenarg, iv,
-	    ivlenarg, aad, aadlen, msg, msglen)) {
-		puts("invalid");
-		return 1;
-	}
-
-	if (ctlen != encoutlen - LC_POLY1305_TAGLEN ||
-	    !lc_ct_cmp(encout, ct, ctlen)) {
-		if (verbose) {
-			fprintf(stderr, "ct (%zu, %zu)\n", ctlen,
-			    encoutlen - LC_POLY1305_TAGLEN);
-			lc_hexdump_fp(stderr, msg, msglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, ct, ctlen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, encout,
-			    encoutlen - LC_POLY1305_TAGLEN);
-			fprintf(stderr, "\n");
-		}
-		puts("invalid");
-		return 1;
-	}
-	if (taglenarg != LC_POLY1305_TAGLEN ||
-	    !lc_ct_cmp(encout + ctlen, tag, LC_POLY1305_TAGLEN)) {
-		if (verbose) {
-			fprintf(stderr, "tag (%zu, %zu)\n", taglenarg,
-			    (size_t)LC_POLY1305_TAGLEN);
-			lc_hexdump_fp(stderr, tag, taglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, encout + ctlen,
-			    LC_POLY1305_TAGLEN);
-			fprintf(stderr, "\n");
-		}
-		puts("invalid");
-		return 1;
-	}
-
-	/* Decryption. */
-
-	buf = malloc(msglen + taglen);
-	if (buf == NULL)
-		err(1, "out of memory");
-	memcpy(buf, ct, ctlen);
-	memcpy(buf + ctlen, tag, taglen);
-
-	if (!lc_aead_open(impl, NULL, &decoutlen, key, keylenarg, iv, ivlenarg,
-	    aad, aadlen, buf, ctlen + taglen)) {
-		puts("invalid");
-		return 1;
-	}
-	decout = malloc(decoutlen);
-	if (encout == NULL)
-		err(1, "out of memory");
-	if (!lc_aead_open(impl, decout, &decoutlen, key, keylenarg, iv,
-	    ivlenarg, aad, aadlen, buf, ctlen + taglen)) {
-		puts("invalid");
-		return 1;
-	}
-
-	if (msglen != decoutlen || !lc_ct_cmp(decout, msg, msglen)) {
-		if (verbose) {
-			fprintf(stderr, "ct (%zu, %zu)\n", msglen, decoutlen);
-			lc_hexdump_fp(stderr, msg, msglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, ct, ctlen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, decout, decoutlen);
-			fprintf(stderr, "\n");
-		}
-		puts("invalid");
-		return 1;
-	}
-	/* Tag isn't checked, as it's already validated by lc_aead_open. */
-
-	puts("valid");
-	return 0;
 }
