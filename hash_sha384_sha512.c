@@ -18,9 +18,7 @@
 
 #include "lilcrypto.h"
 #include "hash.h"
-#include "hash_sha384_sha512.h"
 #include "impl_sha512.h"
-
 #include "util.h"
 
 
@@ -56,7 +54,7 @@
 #define SHA512_H0_7	UINT64_C(0x5be0cd19137e2179)
 
 
-int
+static int
 sha384_init(void *arg)
 {
 	struct sha512_ctx	*ctx = arg;
@@ -80,7 +78,7 @@ sha384_init(void *arg)
 	return 1;
 }
 
-int
+static int
 sha512_init(void *arg)
 {
 	struct sha512_ctx	*ctx = arg;
@@ -148,13 +146,13 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 	return 1;
 }
 
-int
+static int
 sha384_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	return sha384_sha512_update(arg, in, inlen);
 }
 
-int
+static int
 sha512_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	return sha384_sha512_update(arg, in, inlen);
@@ -182,7 +180,7 @@ sha384_sha512_final(struct sha512_ctx *ctx)
 	sha512_block(ctx);
 }
 
-int
+static int
 sha384_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct sha512_ctx	*ctx = arg;
@@ -204,7 +202,7 @@ sha384_final(void *arg, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
-int
+static int
 sha512_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct sha512_ctx	*ctx = arg;

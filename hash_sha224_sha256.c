@@ -18,9 +18,7 @@
 
 #include "lilcrypto.h"
 #include "hash.h"
-#include "hash_sha224_sha256.h"
 #include "impl_sha256.h"
-
 #include "util.h"
 
 
@@ -55,7 +53,7 @@
 #define SHA256_H0_7	UINT32_C(0x5be0cd19)
 
 
-int
+static int
 sha224_init(void *arg)
 {
 	struct sha256_ctx	*ctx = arg;
@@ -79,7 +77,7 @@ sha224_init(void *arg)
 	return 1;
 }
 
-int
+static int
 sha256_init(void *arg)
 {
 	struct sha256_ctx	*ctx = arg;
@@ -143,13 +141,13 @@ sha224_sha256_update(void *arg, const uint8_t *in, size_t inlen)
 	return 1;
 }
 
-int
+static int
 sha224_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	return sha224_sha256_update(arg, in, inlen);
 }
 
-int
+static int
 sha256_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	return sha224_sha256_update(arg, in, inlen);
@@ -176,7 +174,7 @@ sha224_sha256_final(struct sha256_ctx *ctx)
 	sha256_block(ctx);
 }
 
-int
+static int
 sha224_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct sha256_ctx	*ctx = arg;
@@ -199,7 +197,7 @@ sha224_final(void *arg, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
-int
+static int
 sha256_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct sha256_ctx	*ctx = arg;
