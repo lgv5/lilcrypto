@@ -28,6 +28,31 @@
 #define nelems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 
 
+struct testcase {
+	uint8_t	*key;
+	size_t	 keylen;
+	size_t	 keylenarg;
+	uint8_t	*tag;
+	size_t	 taglen;
+	size_t	 taglenarg;
+	uint8_t	*msg;
+	size_t	 msglen;
+};
+
+struct kwrunner {
+	const char	 *kw;
+	int		(*runner)(const struct testcase *, int);
+};
+
+
+static int	hmac_sha2_runner(const struct lc_auth_impl *,
+		    const struct testcase *, int);
+static int	hmac_sha224_runner(const struct testcase *, int);
+static int	hmac_sha256_runner(const struct testcase *, int);
+static int	hmac_sha384_runner(const struct testcase *, int);
+static int	hmac_sha512_runner(const struct testcase *, int);
+
+
 static inline uint8_t
 hex2num(char s)
 {
@@ -60,122 +85,29 @@ hexparse(const char *s, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
-struct testcase {
-	uint8_t	*key;
-	size_t	 keylen;
-	size_t	 keylenarg;
-	uint8_t	*tag;
-	size_t	 taglen;
-	size_t	 taglenarg;
-	uint8_t	*msg;
-	size_t	 msglen;
-};
-
 static int
-hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
-    int verbose)
+kwrunner_cmp(const void *k0, const void *h0)
 {
-	struct lc_hmac_params	 params;
-	struct lc_auth_ctx	*ctx;
-	uint8_t			*buf;
-	size_t			 olen;
-
-	if (c->keylen != c->keylenarg)
-		return 0;
-	params.key = c->key;
-	params.keylen = c->keylen;
-
-	ctx = lc_auth_ctx_new(impl);
-	if (ctx == NULL)
-		errx(1, "can't allocate ctx");
-
-	if (!lc_auth_init(ctx, &params) ||
-	    !lc_auth_update(ctx, c->msg, c->msglen) ||
-	    !lc_auth_final(ctx, NULL, &olen))
-		return 0;
-
-	buf = malloc(olen);
-	if (buf == NULL)
-		err(1, "out of memory");
-
-	if (!lc_auth_final(ctx, buf, &olen))
-		return 0;
-
-	/*
-	 * Tests include truncated output. Skip checking olen as it'll always
-	 * be the full-length hash.
-	 */
-	if (c->taglen != c->taglenarg ||
-	    !lc_ct_cmp(buf, c->tag, c->taglen)) {
-		if (verbose) {
-			fprintf(stderr, "tag (%zu, %zu, %zu)\n", c->taglen,
-			    c->taglenarg, olen);
-			lc_hexdump_fp(stderr, c->tag, c->taglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, buf, olen);
-			fprintf(stderr, "\n");
-		}
-		return 0;
-	}
-
-	free(buf);
-	lc_auth_ctx_free(ctx);
-
-	return 1;
-}
-
-static int
-hmac_sha224_runner(const struct testcase *c, int verbose)
-{
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha224(), c, verbose);
-}
-
-static int
-hmac_sha256_runner(const struct testcase *c, int verbose)
-{
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha256(), c, verbose);
-}
-
-static int
-hmac_sha384_runner(const struct testcase *c, int verbose)
-{
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha384(), c, verbose);
-}
-
-static int
-hmac_sha512_runner(const struct testcase *c, int verbose)
-{
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha512(), c, verbose);
-}
-
-struct kwimpl {
-	const char	 *kw;
-	int		(*runner)(const struct testcase *, int);
-};
-
-static int
-kwimpl_cmp(const void *k0, const void *h0)
-{
-	const struct kwimpl	*h = h0;
+	const struct kwrunner	*h = h0;
 	const char		*k = k0;
 
 	return strcmp(k, h->kw);
 }
 
 static int
-(*kw2impl(const char *s))(const struct testcase *, int)
+(*kw2runner(const char *s))(const struct testcase *, int)
 {
 	/* Needs to be sorted. */
-	static const struct kwimpl	tbl[] = {
+	static const struct kwrunner	 tbl[] = {
 		{ "HMACSHA224", &hmac_sha224_runner },
 		{ "HMACSHA256", &hmac_sha256_runner },
 		{ "HMACSHA384", &hmac_sha384_runner },
 		{ "HMACSHA512", &hmac_sha512_runner },
 	};
-	struct kwimpl	*match;
+	struct kwrunner			*match;
 
-	match = bsearch(s, tbl, nelems(tbl), sizeof(struct kwimpl),
-	    &kwimpl_cmp);
+	match = bsearch(s, tbl, nelems(tbl), sizeof(struct kwrunner),
+	    &kwrunner_cmp);
 
 	return match != NULL ? match->runner : NULL;
 }
@@ -200,7 +132,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	runner = kw2impl(argv[1]);
+	runner = kw2runner(argv[1]);
 	if (runner == NULL)
 		errx(1, "unsupported algorithm: %s", argv[1]);
 
@@ -285,4 +217,81 @@ main(int argc, char *argv[])
 
 	puts("valid");
 	return 0;
+}
+
+static int
+hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
+    int verbose)
+{
+	struct lc_hmac_params	 params;
+	struct lc_auth_ctx	*ctx;
+	uint8_t			*buf;
+	size_t			 olen;
+
+	if (c->keylen != c->keylenarg)
+		return 0;
+	params.key = c->key;
+	params.keylen = c->keylen;
+
+	ctx = lc_auth_ctx_new(impl);
+	if (ctx == NULL)
+		errx(1, "can't allocate ctx");
+
+	if (!lc_auth_init(ctx, &params) ||
+	    !lc_auth_update(ctx, c->msg, c->msglen) ||
+	    !lc_auth_final(ctx, NULL, &olen))
+		return 0;
+
+	buf = malloc(olen);
+	if (buf == NULL)
+		err(1, "out of memory");
+
+	if (!lc_auth_final(ctx, buf, &olen))
+		return 0;
+
+	/*
+	 * Tests include truncated output. Skip checking olen as it'll always
+	 * be the full-length hash.
+	 */
+	if (c->taglen != c->taglenarg ||
+	    !lc_ct_cmp(buf, c->tag, c->taglen)) {
+		if (verbose) {
+			fprintf(stderr, "tag (%zu, %zu, %zu)\n", c->taglen,
+			    c->taglenarg, olen);
+			lc_hexdump_fp(stderr, c->tag, c->taglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, buf, olen);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+
+	free(buf);
+	lc_auth_ctx_free(ctx);
+
+	return 1;
+}
+
+static int
+hmac_sha224_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha224(), c, verbose);
+}
+
+static int
+hmac_sha256_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha256(), c, verbose);
+}
+
+static int
+hmac_sha384_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha384(), c, verbose);
+}
+
+static int
+hmac_sha512_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_auth_impl_hmac_sha512(), c, verbose);
 }

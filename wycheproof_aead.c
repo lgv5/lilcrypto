@@ -28,6 +28,36 @@
 #define nelems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 
 
+struct testcase {
+	uint8_t	*key;
+	size_t	 keylen;
+	size_t	 keylenarg;
+	uint8_t	*iv;
+	size_t	 ivlen;
+	size_t	 ivlenarg;
+	uint8_t	*tag;
+	size_t	 taglen;
+	size_t	 taglenarg;
+	uint8_t	*aad;
+	size_t	 aadlen;
+	uint8_t	*msg;
+	size_t	 msglen;
+	uint8_t *ct;
+	size_t	 ctlen;
+};
+
+struct kwrunner {
+	const char	 *kw;
+	int		(*runner)(const struct testcase *, int);
+};
+
+
+static int	aead_poly1305_runner(const struct lc_aead_impl *,
+		    const struct testcase *, const void *, int);
+static int	chacha20_poly1305_runner(const struct testcase *, int);
+static int	xchacha20_poly1305_runner(const struct testcase *, int);
+
+
 static inline uint8_t
 hex2num(char s)
 {
@@ -60,170 +90,26 @@ hexparse(const char *s, uint8_t *out, size_t *outlen)
 	return 1;
 }
 
-struct testcase {
-	uint8_t	*key;
-	size_t	 keylen;
-	size_t	 keylenarg;
-	uint8_t	*iv;
-	size_t	 ivlen;
-	size_t	 ivlenarg;
-	uint8_t	*tag;
-	size_t	 taglen;
-	size_t	 taglenarg;
-	uint8_t	*aad;
-	size_t	 aadlen;
-	uint8_t	*msg;
-	size_t	 msglen;
-	uint8_t *ct;
-	size_t	 ctlen;
-};
-
 static int
-aead_poly1305_runner(const struct lc_aead_impl *impl, const struct testcase *c,
-    const void *params, int verbose)
+kwrunner_cmp(const void *k0, const void *h0)
 {
-	uint8_t	*buf, *encout, *decout;
-	size_t	 aeadlen, encoutlen, decoutlen;
-
-	if (!lc_aead_seal(impl, NULL, &encoutlen, params, c->aad, c->aadlen,
-	    c->msg, c->msglen))
-		return 0;
-	encout = malloc(encoutlen);
-	if (encout == NULL)
-		err(1, "out of memory");
-	if (!lc_aead_seal(impl, encout, &encoutlen, params, c->aad, c->aadlen,
-	    c->msg, c->msglen))
-		return 0;
-
-	if (c->ctlen != encoutlen - LC_POLY1305_TAGLEN ||
-	    !lc_ct_cmp(encout, c->ct, c->ctlen)) {
-		if (verbose) {
-			fprintf(stderr, "ct (%zu, %zu)\n", c->ctlen,
-			    encoutlen - LC_POLY1305_TAGLEN);
-			lc_hexdump_fp(stderr, c->msg, c->msglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, c->ct, c->ctlen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, encout,
-			    encoutlen - LC_POLY1305_TAGLEN);
-			fprintf(stderr, "\n");
-		}
-		return 0;
-	}
-	if (c->taglenarg != LC_POLY1305_TAGLEN ||
-	    !lc_ct_cmp(encout + c->ctlen, c->tag, LC_POLY1305_TAGLEN)) {
-		if (verbose) {
-			fprintf(stderr, "tag (%zu, %zu)\n", c->taglenarg,
-			    (size_t)LC_POLY1305_TAGLEN);
-			lc_hexdump_fp(stderr, c->tag, c->taglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, encout + c->ctlen,
-			    LC_POLY1305_TAGLEN);
-			fprintf(stderr, "\n");
-		}
-		return 0;
-	}
-
-	/* Decryption. */
-
-	aeadlen = c->msglen + c->taglen;
-	buf = malloc(aeadlen);
-	if (buf == NULL)
-		err(1, "out of memory");
-	memcpy(buf, c->ct, c->ctlen);
-	memcpy(buf + c->ctlen, c->tag, c->taglen);
-
-	if (!lc_aead_open(impl, NULL, &decoutlen, params, c->aad, c->aadlen,
-	    buf, aeadlen))
-		return 0;
-	decout = malloc(decoutlen);
-	if (decout == NULL)
-		err(1, "out of memory");
-	if (!lc_aead_open(impl, decout, &decoutlen, params, c->aad, c->aadlen,
-	    buf, aeadlen))
-		return 0;
-
-	if (c->msglen != decoutlen || !lc_ct_cmp(decout, c->msg, c->msglen)) {
-		if (verbose) {
-			fprintf(stderr, "ct (%zu, %zu)\n", c->msglen,
-			    decoutlen);
-			lc_hexdump_fp(stderr, c->msg, c->msglen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, c->ct, c->ctlen);
-			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, decout, decoutlen);
-			fprintf(stderr, "\n");
-		}
-		return 0;
-	}
-	/* Tag isn't checked, as it's already validated by lc_aead_open. */
-
-	return 1;
-}
-
-static int
-chacha20_poly1305_runner(const struct testcase *c, int verbose)
-{
-	struct lc_chacha20_poly1305_params	params;
-
-	if (c->keylenarg != LC_CHACHA20_KEYLEN ||
-	    c->keylen != LC_CHACHA20_KEYLEN)
-		return 0;
-	memcpy(params.key, c->key, LC_CHACHA20_KEYLEN);
-
-	if (c->ivlenarg != LC_CHACHA20_NONCELEN ||
-	    c->ivlen != LC_CHACHA20_NONCELEN)
-		return 0;
-	memcpy(params.nonce, c->iv, LC_CHACHA20_NONCELEN);
-
-	return aead_poly1305_runner(lc_aead_impl_chacha20_poly1305(), c,
-	    &params, verbose);
-}
-
-static int
-xchacha20_poly1305_runner(const struct testcase *c, int verbose)
-{
-	struct lc_xchacha20_poly1305_params	params;
-
-	if (c->keylenarg != LC_XCHACHA20_KEYLEN ||
-	    c->keylen != LC_XCHACHA20_KEYLEN)
-		return 0;
-	memcpy(params.key, c->key, LC_XCHACHA20_KEYLEN);
-
-	if (c->ivlenarg != LC_XCHACHA20_NONCELEN ||
-	    c->ivlen != LC_XCHACHA20_NONCELEN)
-		return 0;
-	memcpy(params.nonce, c->iv, LC_XCHACHA20_NONCELEN);
-
-	return aead_poly1305_runner(lc_aead_impl_xchacha20_poly1305(), c,
-	    &params, verbose);
-}
-
-struct kwimpl {
-	const char	 *kw;
-	int		(*runner)(const struct testcase *, int);
-};
-
-static int
-kwimpl_cmp(const void *k0, const void *h0)
-{
-	const struct kwimpl	*h = h0;
+	const struct kwrunner	*h = h0;
 	const char		*k = k0;
 
 	return strcmp(k, h->kw);
 }
 
 static int
-(*kw2impl(const char *s))(const struct testcase *, int)
+(*kw2runner(const char *s))(const struct testcase *, int)
 {
-	static const struct kwimpl	tbl[] = {
+	static const struct kwrunner	 tbl[] = {
 		{ "CHACHA20-POLY1305", &chacha20_poly1305_runner },
 		{ "XCHACHA20-POLY1305", &xchacha20_poly1305_runner },
 	};
-	struct kwimpl	*match;
+	struct kwrunner			*match;
 
-	match = bsearch(s, tbl, nelems(tbl), sizeof(struct kwimpl),
-	    &kwimpl_cmp);
+	match = bsearch(s, tbl, nelems(tbl), sizeof(struct kwrunner),
+	    &kwrunner_cmp);
 
 	return match != NULL ? match->runner : NULL;
 }
@@ -249,7 +135,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	runner = kw2impl(argv[1]);
+	runner = kw2runner(argv[1]);
 	if (runner == NULL)
 		errx(1, "unsupported algorithm: %s", argv[1]);
 
@@ -376,4 +262,125 @@ main(int argc, char *argv[])
 		puts("invalid");
 		return 0;
 	}
+}
+
+static int
+aead_poly1305_runner(const struct lc_aead_impl *impl, const struct testcase *c,
+    const void *params, int verbose)
+{
+	uint8_t	*buf, *encout, *decout;
+	size_t	 aeadlen, encoutlen, decoutlen;
+
+	if (!lc_aead_seal(impl, NULL, &encoutlen, params, c->aad, c->aadlen,
+	    c->msg, c->msglen))
+		return 0;
+	encout = malloc(encoutlen);
+	if (encout == NULL)
+		err(1, "out of memory");
+	if (!lc_aead_seal(impl, encout, &encoutlen, params, c->aad, c->aadlen,
+	    c->msg, c->msglen))
+		return 0;
+
+	if (c->ctlen != encoutlen - LC_POLY1305_TAGLEN ||
+	    !lc_ct_cmp(encout, c->ct, c->ctlen)) {
+		if (verbose) {
+			fprintf(stderr, "ct (%zu, %zu)\n", c->ctlen,
+			    encoutlen - LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, c->msg, c->msglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, c->ct, c->ctlen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, encout,
+			    encoutlen - LC_POLY1305_TAGLEN);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+	if (c->taglenarg != LC_POLY1305_TAGLEN ||
+	    !lc_ct_cmp(encout + c->ctlen, c->tag, LC_POLY1305_TAGLEN)) {
+		if (verbose) {
+			fprintf(stderr, "tag (%zu, %zu)\n", c->taglenarg,
+			    (size_t)LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, c->tag, c->taglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, encout + c->ctlen,
+			    LC_POLY1305_TAGLEN);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+
+	/* Decryption. */
+
+	aeadlen = c->msglen + c->taglen;
+	buf = malloc(aeadlen);
+	if (buf == NULL)
+		err(1, "out of memory");
+	memcpy(buf, c->ct, c->ctlen);
+	memcpy(buf + c->ctlen, c->tag, c->taglen);
+
+	if (!lc_aead_open(impl, NULL, &decoutlen, params, c->aad, c->aadlen,
+	    buf, aeadlen))
+		return 0;
+	decout = malloc(decoutlen);
+	if (decout == NULL)
+		err(1, "out of memory");
+	if (!lc_aead_open(impl, decout, &decoutlen, params, c->aad, c->aadlen,
+	    buf, aeadlen))
+		return 0;
+
+	if (c->msglen != decoutlen || !lc_ct_cmp(decout, c->msg, c->msglen)) {
+		if (verbose) {
+			fprintf(stderr, "ct (%zu, %zu)\n", c->msglen,
+			    decoutlen);
+			lc_hexdump_fp(stderr, c->msg, c->msglen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, c->ct, c->ctlen);
+			fprintf(stderr, "\n");
+			lc_hexdump_fp(stderr, decout, decoutlen);
+			fprintf(stderr, "\n");
+		}
+		return 0;
+	}
+	/* Tag isn't checked, as it's already validated by lc_aead_open. */
+
+	return 1;
+}
+
+static int
+chacha20_poly1305_runner(const struct testcase *c, int verbose)
+{
+	struct lc_chacha20_poly1305_params	params;
+
+	if (c->keylenarg != LC_CHACHA20_KEYLEN ||
+	    c->keylen != LC_CHACHA20_KEYLEN)
+		return 0;
+	memcpy(params.key, c->key, LC_CHACHA20_KEYLEN);
+
+	if (c->ivlenarg != LC_CHACHA20_NONCELEN ||
+	    c->ivlen != LC_CHACHA20_NONCELEN)
+		return 0;
+	memcpy(params.nonce, c->iv, LC_CHACHA20_NONCELEN);
+
+	return aead_poly1305_runner(lc_aead_impl_chacha20_poly1305(), c,
+	    &params, verbose);
+}
+
+static int
+xchacha20_poly1305_runner(const struct testcase *c, int verbose)
+{
+	struct lc_xchacha20_poly1305_params	params;
+
+	if (c->keylenarg != LC_XCHACHA20_KEYLEN ||
+	    c->keylen != LC_XCHACHA20_KEYLEN)
+		return 0;
+	memcpy(params.key, c->key, LC_XCHACHA20_KEYLEN);
+
+	if (c->ivlenarg != LC_XCHACHA20_NONCELEN ||
+	    c->ivlen != LC_XCHACHA20_NONCELEN)
+		return 0;
+	memcpy(params.nonce, c->iv, LC_XCHACHA20_NONCELEN);
+
+	return aead_poly1305_runner(lc_aead_impl_xchacha20_poly1305(), c,
+	    &params, verbose);
 }
