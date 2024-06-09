@@ -29,7 +29,7 @@
 static const uint8_t	zeropad[16];
 
 static int
-aead_poly1305_keysetup(struct lc_cipher_ctx *cctx,
+chacha20_xchacha20_keysetup(struct lc_cipher_ctx *cctx,
     uint8_t akey[LC_POLY1305_KEYLEN], const void *initparams)
 {
 	size_t	i, olen, akeylen;
@@ -90,7 +90,7 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!aead_poly1305_keysetup(cctx, aparams.key, &cparams))
+	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -179,7 +179,7 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!aead_poly1305_keysetup(cctx, aparams.key, &cparams))
+	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -270,7 +270,7 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!aead_poly1305_keysetup(cctx, aparams.key, &cparams))
+	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -365,7 +365,7 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!aead_poly1305_keysetup(cctx, aparams.key, &cparams))
+	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
