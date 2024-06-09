@@ -49,23 +49,6 @@ aead_poly1305_keysetup(struct lc_cipher_ctx *cctx,
 }
 
 static int
-aead_poly1305_anycrypt(struct lc_cipher_ctx *cctx, uint8_t *out,
-    size_t *outlen, const void *initparams, const uint8_t *in, size_t inlen)
-{
-	size_t	olen;
-
-	if (!lc_cipher_encrypt_init(cctx, initparams) ||
-	    !lc_cipher_encrypt_update(cctx, out, &olen, in, inlen))
-		return 0;
-	*outlen = olen;
-	if (!lc_cipher_encrypt_final(cctx, out + olen, &olen))
-		return 0;
-	*outlen += olen;
-
-	return *outlen == inlen;
-}
-
-static int
 chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
     const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
 {
@@ -118,7 +101,14 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 			goto cleanup;
 
 	cparams.counter = 1;
-	if (!aead_poly1305_anycrypt(cctx, out, outlen, &cparams, in, inlen))
+	if (!lc_cipher_encrypt_init(cctx, &cparams) ||
+	    !lc_cipher_encrypt_update(cctx, out, &olen, in, inlen))
+		goto cleanup;
+	*outlen = olen;
+	if (!lc_cipher_encrypt_final(cctx, out + olen, &olen))
+		goto cleanup;
+	*outlen += olen;
+	if (*outlen != inlen)
 		goto cleanup;
 
 	if (!lc_auth_update(actx, out, inlen))
@@ -200,7 +190,14 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 			goto cleanup;
 
 	cparams.counter = 1;
-	if (!aead_poly1305_anycrypt(cctx, out, outlen, &cparams, in, inlen))
+	if (!lc_cipher_encrypt_init(cctx, &cparams) ||
+	    !lc_cipher_encrypt_update(cctx, out, &olen, in, inlen))
+		goto cleanup;
+	*outlen = olen;
+	if (!lc_cipher_encrypt_final(cctx, out + olen, &olen))
+		goto cleanup;
+	*outlen += olen;
+	if (*outlen != inlen)
 		goto cleanup;
 
 	if (!lc_auth_update(actx, out, inlen))
@@ -301,8 +298,16 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 		goto cleanup;
 
 	cparams.counter = 1;
-	if (!aead_poly1305_anycrypt(cctx, out, outlen, &cparams, in, ctlen))
+	if (!lc_cipher_decrypt_init(cctx, &cparams) ||
+	    !lc_cipher_decrypt_update(cctx, out, &olen, in, ctlen))
 		goto cleanup;
+	*outlen = olen;
+	if (!lc_cipher_decrypt_final(cctx, out + olen, &olen))
+		goto cleanup;
+	*outlen += olen;
+	if (*outlen != ctlen)
+		goto cleanup;
+
 	ret = 1;
 
  cleanup:
@@ -388,7 +393,14 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 		goto cleanup;
 
 	cparams.counter = 1;
-	if (!aead_poly1305_anycrypt(cctx, out, outlen, &cparams, in, ctlen))
+	if (!lc_cipher_decrypt_init(cctx, &cparams) ||
+	    !lc_cipher_decrypt_update(cctx, out, &olen, in, ctlen))
+		goto cleanup;
+	*outlen = olen;
+	if (!lc_cipher_decrypt_final(cctx, out + olen, &olen))
+		goto cleanup;
+	*outlen += olen;
+	if (*outlen != ctlen)
 		goto cleanup;
 	ret = 1;
 
