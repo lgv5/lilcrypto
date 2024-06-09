@@ -91,25 +91,25 @@ chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
 	uint32_t		 h;
 
 	*outlen = 0;
-	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) - ctx->mlen)
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) - ctx->mlen)
 		return 0;
-	blocks = (inlen + ctx->mlen + CHACHA20_BLOCKLEN - 1) /
-	    CHACHA20_BLOCKLEN;
+	blocks = (inlen + ctx->mlen + LC_CHACHA20_BLOCKLEN - 1) /
+	    LC_CHACHA20_BLOCKLEN;
 	if (blocks + ctx->n[0] > CHACHA20_CTRMAX)
 		return 0;
 
 	*outlen = ctx->mlen + inlen -
-	    ((ctx->mlen + inlen) % CHACHA20_BLOCKLEN);
+	    ((ctx->mlen + inlen) % LC_CHACHA20_BLOCKLEN);
 	if (out == NULL)
 		return 1;
 
-	for (i = 0; i + ctx->mlen < CHACHA20_BLOCKLEN && i < inlen; i++)
+	for (i = 0; i + ctx->mlen < LC_CHACHA20_BLOCKLEN && i < inlen; i++)
 		ctx->m[i + ctx->mlen] = in[i];
 	ctx->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == CHACHA20_BLOCKLEN) {
+	if (ctx->mlen == LC_CHACHA20_BLOCKLEN) {
 		chacha20_block(ctx);
 		ctx->n[0]++;
 
@@ -118,14 +118,14 @@ chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
 			h ^= ctx->s[i];
 			store32le(&out[i * 4], h);
 		}
-		out += CHACHA20_BLOCKLEN;
+		out += LC_CHACHA20_BLOCKLEN;
 		ctx->mlen = 0;
 	}
 
 	if (inlen == 0)
 		return 1;
 
-	while (inlen >= CHACHA20_BLOCKLEN) {
+	while (inlen >= LC_CHACHA20_BLOCKLEN) {
 		chacha20_block(ctx);
 		ctx->n[0]++;
 
@@ -134,9 +134,9 @@ chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
 			h ^= ctx->s[i];
 			store32le(&out[i * 4], h);
 		}
-		out += CHACHA20_BLOCKLEN;
-		in += CHACHA20_BLOCKLEN;
-		inlen -= CHACHA20_BLOCKLEN;
+		out += LC_CHACHA20_BLOCKLEN;
+		in += LC_CHACHA20_BLOCKLEN;
+		inlen -= LC_CHACHA20_BLOCKLEN;
 	}
 
 	for (i = 0; i < inlen; i++)
@@ -189,8 +189,8 @@ chacha20_anycrypt(uint8_t *out, size_t *outlen, const void *initparams,
 
 	*outlen = 0;
 
-	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) ||
-	    (inlen + CHACHA20_BLOCKLEN - 1) / CHACHA20_BLOCKLEN >
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
 	    CHACHA20_CTRMAX)
 		return 0;
 

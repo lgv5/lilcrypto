@@ -20,8 +20,7 @@
 #include "lilcrypto.h"
 
 
-#define CHACHA20_BLOCKLEN	64
-#define CHACHA20_BLOCKLEN_WORDS	(CHACHA20_BLOCKLEN / sizeof(uint32_t))
+#define CHACHA20_BLOCKLEN_WORDS	(LC_CHACHA20_BLOCKLEN / sizeof(uint32_t))
 #define CHACHA20_CTRMAX		4294967295	/* 2^32 - 1 */
 #define CHACHA20_KEY_WORDS	(LC_CHACHA20_KEYLEN / sizeof(uint32_t))
 #define CHACHA20_NONCE_WORDS	4
@@ -33,7 +32,7 @@ struct chacha20_ctx {
 	uint32_t	k[CHACHA20_KEY_WORDS];
 	uint32_t	n[CHACHA20_NONCE_WORDS];
 	size_t		mlen;
-	uint8_t		m[CHACHA20_BLOCKLEN];
+	uint8_t		m[LC_CHACHA20_BLOCKLEN];
 };
 
 

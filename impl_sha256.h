@@ -20,8 +20,7 @@
 #include "lilcrypto.h"
 
 
-#define SHA256_BLOCKLEN		64
-#define SHA256_BLOCKLEN_WORDS	(SHA256_BLOCKLEN / sizeof(uint32_t))
+#define SHA256_BLOCKLEN_WORDS	(LC_SHA256_BLOCKLEN / sizeof(uint32_t))
 #define SHA256_ROUNDS		64
 
 
@@ -29,7 +28,7 @@ struct sha256_ctx {
 	uint32_t	h0, h1, h2, h3, h4, h5, h6, h7;
 	uint64_t	sz;
 	size_t		mlen;
-	uint8_t		m[SHA256_BLOCKLEN];
+	uint8_t		m[LC_SHA256_BLOCKLEN];
 };
 
 

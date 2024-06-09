@@ -67,8 +67,8 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 	    inlen > SIZE_MAX - LC_POLY1305_TAGLEN)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
-	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) ||
-	    (inlen + CHACHA20_BLOCKLEN - 1) / CHACHA20_BLOCKLEN >
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
 	    CHACHA20_CTRMAX - 1)
 		return 0;
 
@@ -156,8 +156,8 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 	    inlen > SIZE_MAX - LC_POLY1305_TAGLEN)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
-	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) ||
-	    (inlen + CHACHA20_BLOCKLEN - 1) / CHACHA20_BLOCKLEN >
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
 	    CHACHA20_CTRMAX - 1)
 		return 0;
 
@@ -246,8 +246,8 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 	    inlen > UINT64_MAX || aadlen > UINT64_MAX)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
-	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) ||
-	    (inlen + CHACHA20_BLOCKLEN - 1) / CHACHA20_BLOCKLEN >
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
 	    CHACHA20_CTRMAX - 1) {
 		return 0;
 	}
@@ -341,8 +341,8 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 	    inlen > UINT64_MAX || aadlen > UINT64_MAX)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
-	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) ||
-	    (inlen + CHACHA20_BLOCKLEN - 1) / CHACHA20_BLOCKLEN >
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
 	    CHACHA20_CTRMAX - 1) {
 		return 0;
 	}

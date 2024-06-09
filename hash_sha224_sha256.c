@@ -71,7 +71,7 @@ sha224_init(void *arg)
 	ctx->sz = 0;
 
 	ctx->mlen = 0;
-	for (i = 0; i < SHA256_BLOCKLEN; i++)
+	for (i = 0; i < LC_SHA256_BLOCKLEN; i++)
 		ctx->m[i] = 0;
 
 	return 1;
@@ -95,7 +95,7 @@ sha256_init(void *arg)
 	ctx->sz = 0;
 
 	ctx->mlen = 0;
-	for (i = 0; i < SHA256_BLOCKLEN; i++)
+	for (i = 0; i < LC_SHA256_BLOCKLEN; i++)
 		ctx->m[i] = 0;
 
 	return 1;
@@ -111,13 +111,13 @@ sha224_sha256_update(void *arg, const uint8_t *in, size_t inlen)
 		return 0;
 	ctx->sz += inlen;
 
-	for (i = 0; i + ctx->mlen < SHA256_BLOCKLEN && i < inlen; i++)
+	for (i = 0; i + ctx->mlen < LC_SHA256_BLOCKLEN && i < inlen; i++)
 		ctx->m[i + ctx->mlen] = in[i];
 	ctx->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == SHA256_BLOCKLEN) {
+	if (ctx->mlen == LC_SHA256_BLOCKLEN) {
 		sha256_block(ctx);
 		ctx->mlen = 0;
 	}
@@ -125,8 +125,8 @@ sha224_sha256_update(void *arg, const uint8_t *in, size_t inlen)
 	if (inlen == 0)
 		return 1;
 
-	while (inlen >= SHA256_BLOCKLEN) {
-		for (i = 0; i < SHA256_BLOCKLEN; i++)
+	while (inlen >= LC_SHA256_BLOCKLEN) {
+		for (i = 0; i < LC_SHA256_BLOCKLEN; i++)
 			ctx->m[i] = in[i];
 		in += i;
 		inlen -= i;
@@ -161,14 +161,14 @@ sha224_sha256_final(struct sha256_ctx *ctx)
 	mlen = ctx->mlen;
 	ctx->m[mlen++] = 0x80;
 
-	if (mlen >= SHA256_BLOCKLEN - sizeof(uint64_t)) {
-		for (i = mlen; i < SHA256_BLOCKLEN; i++)
+	if (mlen >= LC_SHA256_BLOCKLEN - sizeof(uint64_t)) {
+		for (i = mlen; i < LC_SHA256_BLOCKLEN; i++)
 			ctx->m[i] = 0;
 		sha256_block(ctx);
 		mlen = 0;
 	}
 
-	for (i = mlen; i < SHA256_BLOCKLEN - sizeof(uint64_t); i++)
+	for (i = mlen; i < LC_SHA256_BLOCKLEN - sizeof(uint64_t); i++)
 		ctx->m[i] = 0;
 	store64be(&ctx->m[i], ctx->sz << 3);
 	sha256_block(ctx);
