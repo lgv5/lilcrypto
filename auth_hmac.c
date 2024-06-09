@@ -34,7 +34,7 @@ static int
 hmac_common_init(void *arg, const uint8_t *key, size_t keylen)
 {
 	struct hmac_ctx	*ctx = arg;
-	uint8_t		 ikeypad[HMAC_BLOCKSZ_MAX];
+	uint8_t		 ikeypad[HMAC_BLOCKLEN_MAX];
 	size_t		 i, olen;
 
 	if (keylen > ctx->blocksz) {
@@ -92,8 +92,8 @@ hmac_final(void *arg, uint8_t *out, size_t *outlen)
 {
 	struct hmac_ctx		*ctx = arg;
 	struct lc_hash_ctx	*hctx;
-	uint8_t			 m[HMAC_BLOCKSZ_MAX],
-				    okeypad[HMAC_BLOCKSZ_MAX];
+	uint8_t			 m[HMAC_BLOCKLEN_MAX],
+				    okeypad[HMAC_BLOCKLEN_MAX];
 	size_t			 i, olen;
 	int			 rc;
 

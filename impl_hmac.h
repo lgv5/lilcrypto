@@ -20,11 +20,11 @@
 #include "lilcrypto.h"
 
 
-#define HMAC_BLOCKSZ_MAX	128
+#define HMAC_BLOCKLEN_MAX	LC_SHA512_BLOCKLEN
 
 
 struct hmac_ctx {
 	struct lc_hash_ctx	*hctx;
 	size_t			 blocksz;
-	uint8_t			 key[HMAC_BLOCKSZ_MAX];
+	uint8_t			 key[HMAC_BLOCKLEN_MAX];
 };
