@@ -20,16 +20,16 @@
 
 int
 lc_aead_seal(const struct lc_aead_impl *impl, uint8_t *out, size_t *outlen,
-    const void *argparams, const uint8_t *aad, size_t aadlen,
+    const void *initparams, const uint8_t *aad, size_t aadlen,
     const uint8_t *in, size_t inlen)
 {
-	return impl->seal(out, outlen, argparams, aad, aadlen, in, inlen);
+	return impl->seal(out, outlen, initparams, aad, aadlen, in, inlen);
 }
 
 int
 lc_aead_open(const struct lc_aead_impl *impl, uint8_t *out, size_t *outlen,
-    const void *argparams, const uint8_t *aad, size_t aadlen,
+    const void *initparams, const uint8_t *aad, size_t aadlen,
     const uint8_t *in, size_t inlen)
 {
-	return impl->open(out, outlen, argparams, aad, aadlen, in, inlen);
+	return impl->open(out, outlen, initparams, aad, aadlen, in, inlen);
 }
