@@ -51,10 +51,25 @@
 
 
 /*
- * Arguments.
+ * Structs.
  */
 
-/* Authentication */
+struct lc_aead_impl;
+
+struct lc_auth_ctx;
+struct lc_auth_impl;
+
+struct lc_cipher_ctx;
+struct lc_cipher_impl;
+
+struct lc_hash_ctx;
+struct lc_hash_impl;
+
+/*
+ * Parameters.
+ */
+
+/* Authentication. */
 
 struct lc_hmac_params {
 	size_t	 keylen;
@@ -103,10 +118,6 @@ uint32_t	lc_ct_cmp(const uint8_t *, const uint8_t *, size_t);
  * Hashes.
  */
 
-struct lc_hash_ctx;
-struct lc_hash_impl;
-
-
 int	lc_hash_init(struct lc_hash_ctx *);
 int	lc_hash_update(struct lc_hash_ctx *, const uint8_t *, size_t);
 int	lc_hash_final(struct lc_hash_ctx *, uint8_t *, size_t *);
@@ -125,10 +136,6 @@ const struct lc_hash_impl	*lc_hash_impl_sha512(void);
 /*
  * Authentication.
  */
-
-struct lc_auth_ctx;
-struct lc_auth_impl;
-
 
 int	lc_auth_init(struct lc_auth_ctx *, const void *);
 int	lc_auth_update(struct lc_auth_ctx *, const uint8_t *, size_t);
@@ -149,10 +156,6 @@ const struct lc_auth_impl	*lc_auth_impl_hmac_sha512(void);
 /*
  * Ciphers.
  */
-
-struct lc_cipher_ctx;
-struct lc_cipher_impl;
-
 
 int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, const void *);
 int	lc_cipher_encrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
@@ -177,9 +180,6 @@ const struct lc_cipher_impl	*lc_cipher_impl_xchacha20(void);
 /*
  * Authenticated encryption with additional data.
  */
-
-struct lc_aead_impl;
-
 
 int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *,
 	    const void *, const uint8_t *, size_t, const uint8_t *, size_t);
