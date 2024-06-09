@@ -74,11 +74,11 @@ static const uint64_t K[SHA512_ROUNDS] = {
 void
 sha512_block(struct sha512_ctx *ctx)
 {
-	uint64_t	m[SHA512_CHUNK_WORDS], W[SHA512_ROUNDS];
+	uint64_t	m[SHA512_BLOCKLEN_WORDS], W[SHA512_ROUNDS];
 	uint64_t	a, b, c, d, e, f, g, h, T1, T2;
 	size_t		i;
 
-	for (i = 0; i < SHA512_CHUNK_WORDS; i++)
+	for (i = 0; i < SHA512_BLOCKLEN_WORDS; i++)
 		W[i] = m[i] = load64be(&ctx->m[i * 8]);
 	for (; i < SHA512_ROUNDS; i++)
 		W[i] = SSIG1(W[i - 2]) + W[i - 7] + SSIG0(W[i - 15]) +

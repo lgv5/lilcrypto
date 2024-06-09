@@ -37,7 +37,7 @@ chacha20_anycrypt_init(void *arg, const void *initparams)
 	struct chacha20_ctx		*ctx = arg;
 	size_t				 i;
 
-	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
+	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
 		ctx->s[i] = 0;
 	for (i = 0; i < CHACHA20_KEY_WORDS; i++)
 		ctx->k[i] = load32le(&params->key[i * 4]);
@@ -56,7 +56,7 @@ xchacha20_anycrypt_init(void *arg, const void *initparams)
 	struct chacha20_ctx			*ctx = arg;
 	size_t					 i;
 
-	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
+	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
 		ctx->s[i] = 0;
 	for (i = 0; i < CHACHA20_KEY_WORDS; i++)
 		ctx->k[i] = load32le(&params->key[i * 4]);
@@ -91,50 +91,52 @@ chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
 	uint32_t		 h;
 
 	*outlen = 0;
-	if (inlen > SIZE_MAX - (CHACHA20_CHUNK - 1) - ctx->mlen)
+	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) - ctx->mlen)
 		return 0;
-	blocks = (inlen + ctx->mlen + CHACHA20_CHUNK - 1) / CHACHA20_CHUNK;
+	blocks = (inlen + ctx->mlen + CHACHA20_BLOCKLEN - 1) /
+	    CHACHA20_BLOCKLEN;
 	if (blocks + ctx->n[0] > CHACHA20_CTRMAX)
 		return 0;
 
-	*outlen = ctx->mlen + inlen - ((ctx->mlen + inlen) % CHACHA20_CHUNK);
+	*outlen = ctx->mlen + inlen -
+	    ((ctx->mlen + inlen) % CHACHA20_BLOCKLEN);
 	if (out == NULL)
 		return 1;
 
-	for (i = 0; i + ctx->mlen < CHACHA20_CHUNK && i < inlen; i++)
+	for (i = 0; i + ctx->mlen < CHACHA20_BLOCKLEN && i < inlen; i++)
 		ctx->m[i + ctx->mlen] = in[i];
 	ctx->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == CHACHA20_CHUNK) {
+	if (ctx->mlen == CHACHA20_BLOCKLEN) {
 		chacha20_block(ctx);
 		ctx->n[0]++;
 
-		for (i = 0; i < CHACHA20_CHUNK_WORDS; i++) {
+		for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++) {
 			h = load32le(&ctx->m[i * 4]);
 			h ^= ctx->s[i];
 			store32le(&out[i * 4], h);
 		}
-		out += CHACHA20_CHUNK;
+		out += CHACHA20_BLOCKLEN;
 		ctx->mlen = 0;
 	}
 
 	if (inlen == 0)
 		return 1;
 
-	while (inlen >= CHACHA20_CHUNK) {
+	while (inlen >= CHACHA20_BLOCKLEN) {
 		chacha20_block(ctx);
 		ctx->n[0]++;
 
-		for (i = 0; i < CHACHA20_CHUNK_WORDS; i++) {
+		for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++) {
 			h = load32le(&in[i * 4]);
 			h ^= ctx->s[i];
 			store32le(&out[i * 4], h);
 		}
-		out += CHACHA20_CHUNK;
-		in += CHACHA20_CHUNK;
-		inlen -= CHACHA20_CHUNK;
+		out += CHACHA20_BLOCKLEN;
+		in += CHACHA20_BLOCKLEN;
+		inlen -= CHACHA20_BLOCKLEN;
 	}
 
 	for (i = 0; i < inlen; i++)
@@ -187,8 +189,9 @@ chacha20_anycrypt(uint8_t *out, size_t *outlen, const void *initparams,
 
 	*outlen = 0;
 
-	if (inlen > SIZE_MAX - (CHACHA20_CHUNK - 1) ||
-	    (inlen + CHACHA20_CHUNK - 1) / CHACHA20_CHUNK > CHACHA20_CTRMAX)
+	if (inlen > SIZE_MAX - (CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + CHACHA20_BLOCKLEN - 1) / CHACHA20_BLOCKLEN >
+	    CHACHA20_CTRMAX)
 		return 0;
 
 	if (out == NULL) {

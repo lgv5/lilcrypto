@@ -72,7 +72,7 @@ sha384_init(void *arg)
 	ctx->szhi = ctx->szlo = 0;
 
 	ctx->mlen = 0;
-	for (i = 0; i < SHA512_CHUNK; i++)
+	for (i = 0; i < SHA512_BLOCKLEN; i++)
 		ctx->m[i] = 0;
 
 	return 1;
@@ -96,7 +96,7 @@ sha512_init(void *arg)
 	ctx->szhi = ctx->szlo = 0;
 
 	ctx->mlen = 0;
-	for (i = 0; i < SHA512_CHUNK; i++)
+	for (i = 0; i < SHA512_BLOCKLEN; i++)
 		ctx->m[i] = 0;
 
 	return 1;
@@ -116,13 +116,13 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 	} else
 		ctx->szlo += inlen;
 
-	for (i = 0; i + ctx->mlen < SHA512_CHUNK && i < inlen; i++)
+	for (i = 0; i + ctx->mlen < SHA512_BLOCKLEN && i < inlen; i++)
 		ctx->m[i + ctx->mlen] = in[i];
 	ctx->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == SHA512_CHUNK) {
+	if (ctx->mlen == SHA512_BLOCKLEN) {
 		sha512_block(ctx);
 		ctx->mlen = 0;
 	}
@@ -130,8 +130,8 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 	if (inlen == 0)
 		return 1;
 
-	while (inlen >= SHA512_CHUNK) {
-		for (i = 0; i < SHA512_CHUNK; i++)
+	while (inlen >= SHA512_BLOCKLEN) {
+		for (i = 0; i < SHA512_BLOCKLEN; i++)
 			ctx->m[i] = in[i];
 		in += i;
 		inlen -= i;
@@ -166,14 +166,14 @@ sha384_sha512_final(struct sha512_ctx *ctx)
 	mlen = ctx->mlen;
 	ctx->m[mlen++] = 0x80;
 
-	if (mlen >= SHA512_CHUNK - 2 * sizeof(uint64_t)) {
-		for (i = mlen; i < SHA512_CHUNK; i++)
+	if (mlen >= SHA512_BLOCKLEN - 2 * sizeof(uint64_t)) {
+		for (i = mlen; i < SHA512_BLOCKLEN; i++)
 			ctx->m[i] = 0;
 		sha512_block(ctx);
 		mlen = 0;
 	}
 
-	for (i = mlen; i < SHA512_CHUNK - 2 * sizeof(uint64_t); i++)
+	for (i = mlen; i < SHA512_BLOCKLEN - 2 * sizeof(uint64_t); i++)
 		ctx->m[i] = 0;
 	store64be(&ctx->m[i], (ctx->szhi << 3) | (ctx->szlo >> 63));
 	store64be(&ctx->m[i + sizeof(uint64_t)], ctx->szlo << 3);

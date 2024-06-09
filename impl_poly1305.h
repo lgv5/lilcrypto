@@ -20,7 +20,7 @@
 #include "lilcrypto.h"
 
 
-#define POLY1305_CHUNK		16
+#define POLY1305_BLOCKLEN	16
 #define POLY1305_TAGLEN_WORDS	(LC_POLY1305_TAGLEN / sizeof(uint32_t))
 
 
@@ -30,7 +30,7 @@ struct poly1305_ctx {
 	uint32_t	x1, x2, x3, x4;
 	uint32_t	s0, s1, s2, s3;
 	size_t		mlen;
-	uint8_t		m[POLY1305_CHUNK];
+	uint8_t		m[POLY1305_BLOCKLEN];
 };
 
 

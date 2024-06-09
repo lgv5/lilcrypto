@@ -20,8 +20,8 @@
 #include "lilcrypto.h"
 
 
-#define SHA512_CHUNK		128
-#define SHA512_CHUNK_WORDS	(SHA512_CHUNK / sizeof(uint64_t))
+#define SHA512_BLOCKLEN		128
+#define SHA512_BLOCKLEN_WORDS	(SHA512_BLOCKLEN / sizeof(uint64_t))
 #define SHA512_ROUNDS		80
 
 
@@ -29,7 +29,7 @@ struct sha512_ctx {
 	uint64_t	h0, h1, h2, h3, h4, h5, h6, h7;
 	uint64_t	szhi, szlo;
 	size_t		mlen;
-	uint8_t		m[SHA512_CHUNK];
+	uint8_t		m[SHA512_BLOCKLEN];
 };
 
 

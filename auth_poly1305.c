@@ -59,7 +59,7 @@ poly1305_init(void *arg, const void *initparams)
 	ctx->s3 = load32le(&params->key[28]);
 
 	ctx->mlen = 0;
-	for (i = 0; i < POLY1305_CHUNK; i++)
+	for (i = 0; i < POLY1305_BLOCKLEN; i++)
 		ctx->m[i] = 0;
 
 	return 1;
@@ -71,13 +71,13 @@ poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 	struct poly1305_ctx	*ctx = arg;
 	size_t 			 i;
 
-	for (i = 0; i + ctx->mlen < POLY1305_CHUNK && i < inlen; i++)
+	for (i = 0; i + ctx->mlen < POLY1305_BLOCKLEN && i < inlen; i++)
 		ctx->m[i + ctx->mlen] = in[i];
 	ctx->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == POLY1305_CHUNK) {
+	if (ctx->mlen == POLY1305_BLOCKLEN) {
 		poly1305_block(ctx, 1);
 		ctx->mlen = 0;
 	}
@@ -85,13 +85,13 @@ poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 	if (inlen == 0)
 		return 1;
 
-	while (inlen >= POLY1305_CHUNK) {
-		for (i = 0; i < POLY1305_CHUNK; i++)
+	while (inlen >= POLY1305_BLOCKLEN) {
+		for (i = 0; i < POLY1305_BLOCKLEN; i++)
 			ctx->m[i] = in[i];
 		poly1305_block(ctx, 1);
 
-		in += POLY1305_CHUNK;
-		inlen -= POLY1305_CHUNK;
+		in += POLY1305_BLOCKLEN;
+		inlen -= POLY1305_BLOCKLEN;
 	}
 
 	for (i = 0; i < inlen; i++)
@@ -114,9 +114,9 @@ poly1305_final(void *arg, uint8_t *out, size_t *outlen)
 
 	i = ctx->mlen;
 	if (i > 0) {
-		if (i < POLY1305_CHUNK) {
+		if (i < POLY1305_BLOCKLEN) {
 			ctx->m[i++] = 1;
-			for (; i < POLY1305_CHUNK; i++)
+			for (; i < POLY1305_BLOCKLEN; i++)
 				ctx->m[i] = 0;
 			poly1305_block(ctx, 0);
 		} else

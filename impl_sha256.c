@@ -50,11 +50,11 @@ static const uint32_t K[SHA256_ROUNDS] = {
 void
 sha256_block(struct sha256_ctx *ctx)
 {
-	uint32_t	m[SHA256_CHUNK_WORDS], W[SHA256_ROUNDS];
+	uint32_t	m[SHA256_BLOCKLEN_WORDS], W[SHA256_ROUNDS];
 	uint32_t	a, b, c, d, e, f, g, h, T1, T2;
 	size_t		i;
 
-	for (i = 0; i < SHA256_CHUNK_WORDS; i++)
+	for (i = 0; i < SHA256_BLOCKLEN_WORDS; i++)
 		W[i] = m[i] = load32be(&ctx->m[i * 4]);
 	for (; i < SHA256_ROUNDS; i++)
 		W[i] = SSIG1(W[i - 2]) + W[i - 7] + SSIG0(W[i - 15]) +

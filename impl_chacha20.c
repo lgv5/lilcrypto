@@ -45,7 +45,7 @@
 void
 chacha20_block(struct chacha20_ctx *ctx)
 {
-	uint32_t	x[CHACHA20_CHUNK_WORDS];
+	uint32_t	x[CHACHA20_BLOCKLEN_WORDS];
 	size_t		i;
 
 	x[0] = SIGMA0;
@@ -65,7 +65,7 @@ chacha20_block(struct chacha20_ctx *ctx)
 	x[14] = ctx->n[2];
 	x[15] = ctx->n[3];
 
-	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
+	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
 		ctx->s[i] = x[i];
 
 	for (i = 0; i < CHACHA20_ROUNDS; i++) {
@@ -80,14 +80,14 @@ chacha20_block(struct chacha20_ctx *ctx)
 		QUARTERROUND(x[3], x[4], x[9], x[14]);
 	}
 
-	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
+	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
 		ctx->s[i] += x[i];
 }
 
 void
 hchacha20_block(struct chacha20_ctx *ctx)
 {
-	uint32_t	x[CHACHA20_CHUNK_WORDS];
+	uint32_t	x[CHACHA20_BLOCKLEN_WORDS];
 	size_t		i;
 
 	x[0] = SIGMA0;
@@ -119,6 +119,6 @@ hchacha20_block(struct chacha20_ctx *ctx)
 		QUARTERROUND(x[3], x[4], x[9], x[14]);
 	}
 
-	for (i = 0; i < CHACHA20_CHUNK_WORDS; i++)
+	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
 		ctx->s[i] = x[i];
 }
