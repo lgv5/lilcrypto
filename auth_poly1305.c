@@ -24,9 +24,9 @@
 
 
 static int
-poly1305_init(void *arg, const void *initparams)
+poly1305_init(void *arg, void *initparams)
 {
-	const struct lc_poly1305_params	*params = initparams;
+	struct lc_poly1305_params	*params = initparams;
 	struct poly1305_ctx		*ctx = arg;
 	size_t				 i;
 	uint32_t			 t0, t1, t2, t3;
@@ -135,7 +135,7 @@ poly1305_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 static int
-poly1305_auth(uint8_t *out, size_t *outlen, const void *initparams,
+poly1305_auth(uint8_t *out, size_t *outlen, void *initparams,
     const uint8_t *in, size_t inlen)
 {
 	struct poly1305_ctx	ctx;

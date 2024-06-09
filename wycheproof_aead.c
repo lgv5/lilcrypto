@@ -53,7 +53,7 @@ struct kwrunner {
 
 
 static int	aead_poly1305_runner(const struct lc_aead_impl *,
-		    const struct testcase *, const void *, int);
+		    const struct testcase *, void *, int);
 static int	chacha20_poly1305_runner(const struct testcase *, int);
 static int	xchacha20_poly1305_runner(const struct testcase *, int);
 
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 
 static int
 aead_poly1305_runner(const struct lc_aead_impl *impl, const struct testcase *c,
-    const void *params, int verbose)
+    void *params, int verbose)
 {
 	uint8_t	*buf, *encout, *decout;
 	size_t	 aeadlen, encoutlen, decoutlen;

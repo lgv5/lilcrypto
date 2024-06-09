@@ -22,7 +22,7 @@
 
 
 int
-lc_auth_init(struct lc_auth_ctx *ctx, const void *initparams)
+lc_auth_init(struct lc_auth_ctx *ctx, void *initparams)
 {
 	return ctx->impl->init(ctx->arg, initparams);
 }
@@ -41,7 +41,7 @@ lc_auth_final(struct lc_auth_ctx *ctx, uint8_t *out, size_t *outlen)
 
 int
 lc_auth(const struct lc_auth_impl *impl, uint8_t *out, size_t *outlen,
-    const void *initparams, const uint8_t *in, size_t inlen)
+    void *initparams, const uint8_t *in, size_t inlen)
 {
 	return impl->auth(out, outlen, initparams, in, inlen);
 }

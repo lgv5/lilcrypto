@@ -31,9 +31,9 @@
 
 
 static int
-chacha20_anycrypt_init(void *arg, const void *initparams)
+chacha20_anycrypt_init(void *arg, void *initparams)
 {
-	const struct lc_chacha20_params	*params = initparams;
+	struct lc_chacha20_params	*params = initparams;
 	struct chacha20_ctx		*ctx = arg;
 	size_t				 i;
 
@@ -50,11 +50,11 @@ chacha20_anycrypt_init(void *arg, const void *initparams)
 }
 
 static int
-xchacha20_anycrypt_init(void *arg, const void *initparams)
+xchacha20_anycrypt_init(void *arg, void *initparams)
 {
-	const struct lc_xchacha20_params	*params = initparams;
-	struct chacha20_ctx			*ctx = arg;
-	size_t					 i;
+	struct lc_xchacha20_params	*params = initparams;
+	struct chacha20_ctx		*ctx = arg;
+	size_t				 i;
 
 	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
 		ctx->s[i] = 0;
@@ -180,7 +180,7 @@ chacha20_anycrypt_final(void *arg, uint8_t *out, size_t *outlen)
 }
 
 static int
-chacha20_anycrypt(uint8_t *out, size_t *outlen, const void *initparams,
+chacha20_anycrypt(uint8_t *out, size_t *outlen, void *initparams,
     const uint8_t *in, size_t inlen)
 {
 	struct chacha20_ctx	ctx;

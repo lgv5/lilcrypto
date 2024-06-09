@@ -58,10 +58,10 @@ hmac_common_init(void *arg, const uint8_t *key, size_t keylen)
 }
 
 static int
-hmac_sha224_sha256_init(void *arg, const void *initparams)
+hmac_sha224_sha256_init(void *arg, void *initparams)
 {
-	const struct lc_hmac_params	*params = initparams;
-	struct hmac_ctx			*ctx = arg;
+	struct lc_hmac_params	*params = initparams;
+	struct hmac_ctx		*ctx = arg;
 
 	ctx->blocksz = LC_SHA256_BLOCKLEN;
 
@@ -69,10 +69,10 @@ hmac_sha224_sha256_init(void *arg, const void *initparams)
 }
 
 static int
-hmac_sha384_sha512_init(void *arg, const void *initparams)
+hmac_sha384_sha512_init(void *arg, void *initparams)
 {
-	const struct lc_hmac_params	*params = initparams;
-	struct hmac_ctx			*ctx = arg;
+	struct lc_hmac_params	*params = initparams;
+	struct hmac_ctx		*ctx = arg;
 
 	ctx->blocksz = LC_SHA512_BLOCKLEN;
 

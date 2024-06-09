@@ -30,7 +30,7 @@ static const uint8_t	zeropad[16];
 
 static int
 chacha20_xchacha20_keysetup(struct lc_cipher_ctx *cctx,
-    uint8_t akey[LC_POLY1305_KEYLEN], const void *initparams)
+    uint8_t akey[LC_POLY1305_KEYLEN], void *initparams)
 {
 	size_t	i, olen, akeylen;
 
@@ -49,17 +49,17 @@ chacha20_xchacha20_keysetup(struct lc_cipher_ctx *cctx,
 }
 
 static int
-chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
+chacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
     const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
 {
-	const struct lc_chacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx		*cctx = NULL;
-	struct lc_auth_ctx		*actx = NULL;
-	struct lc_chacha20_params	 cparams;
-	struct lc_poly1305_params	 aparams;
-	uint8_t				 buf[sizeof(uint64_t) * 2];
-	size_t				 i, olen;
-	int				 ret = 0;
+	struct lc_chacha20_poly1305_params	*params = initparams;
+	struct lc_cipher_ctx			*cctx = NULL;
+	struct lc_auth_ctx			*actx = NULL;
+	struct lc_chacha20_params		 cparams;
+	struct lc_poly1305_params		 aparams;
+	uint8_t					 buf[sizeof(uint64_t) * 2];
+	size_t					 i, olen;
+	int					 ret = 0;
 
 	*outlen = 0;
 	/* inlen and aadlen are capped by design; enough space of tag. */
@@ -138,17 +138,17 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 }
 
 static int
-xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
+xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
     const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
 {
-	const struct lc_xchacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx		*cctx = NULL;
-	struct lc_auth_ctx		*actx = NULL;
-	struct lc_xchacha20_params	 cparams;
-	struct lc_poly1305_params	 aparams;
-	uint8_t				 buf[sizeof(uint64_t) * 2];
-	size_t				 i, olen;
-	int				 ret = 0;
+	struct lc_xchacha20_poly1305_params	*params = initparams;
+	struct lc_cipher_ctx			*cctx = NULL;
+	struct lc_auth_ctx			*actx = NULL;
+	struct lc_xchacha20_params		 cparams;
+	struct lc_poly1305_params		 aparams;
+	uint8_t					 buf[sizeof(uint64_t) * 2];
+	size_t					 i, olen;
+	int					 ret = 0;
 
 	*outlen = 0;
 	/* inlen and aadlen are capped by design; enough space of tag. */
@@ -227,18 +227,18 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, const void *initparams,
 }
 
 static int
-chacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
+chacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
     const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
 {
-	const struct lc_chacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx		*cctx = NULL;
-	struct lc_auth_ctx		*actx = NULL;
-	struct lc_chacha20_params	 cparams;
-	struct lc_poly1305_params	 aparams;
-	uint8_t				 tag[LC_POLY1305_TAGLEN];
-	uint8_t				 buf[sizeof(uint64_t) * 2];
-	size_t				 i, olen, ctlen;
-	int				 ret = 0;
+	struct lc_chacha20_poly1305_params	*params = initparams;
+	struct lc_cipher_ctx			*cctx = NULL;
+	struct lc_auth_ctx			*actx = NULL;
+	struct lc_chacha20_params		 cparams;
+	struct lc_poly1305_params		 aparams;
+	uint8_t					 tag[LC_POLY1305_TAGLEN];
+	uint8_t					 buf[sizeof(uint64_t) * 2];
+	size_t					 i, olen, ctlen;
+	int					 ret = 0;
 
 	*outlen = 0;
 	/* inlen includes the tag; inlen and aadlen are capped by design. */
@@ -322,18 +322,18 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
 }
 
 static int
-xchacha20_poly1305_open(uint8_t *out, size_t *outlen, const void *initparams,
+xchacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
     const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
 {
-	const struct lc_xchacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx		*cctx = NULL;
-	struct lc_auth_ctx		*actx = NULL;
-	struct lc_xchacha20_params	 cparams;
-	struct lc_poly1305_params	 aparams;
-	uint8_t				 tag[LC_POLY1305_TAGLEN];
-	uint8_t				 buf[sizeof(uint64_t) * 2];
-	size_t				 i, olen, ctlen;
-	int				 ret = 0;
+	struct lc_xchacha20_poly1305_params	*params = initparams;
+	struct lc_cipher_ctx			*cctx = NULL;
+	struct lc_auth_ctx			*actx = NULL;
+	struct lc_xchacha20_params		 cparams;
+	struct lc_poly1305_params		 aparams;
+	uint8_t					 tag[LC_POLY1305_TAGLEN];
+	uint8_t					 buf[sizeof(uint64_t) * 2];
+	size_t					 i, olen, ctlen;
+	int					 ret = 0;
 
 	*outlen = 0;
 	/* inlen includes the tag; inlen and aadlen are capped by design. */

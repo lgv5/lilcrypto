@@ -137,11 +137,11 @@ const struct lc_hash_impl	*lc_hash_impl_sha512(void);
  * Authentication.
  */
 
-int	lc_auth_init(struct lc_auth_ctx *, const void *);
+int	lc_auth_init(struct lc_auth_ctx *, void *);
 int	lc_auth_update(struct lc_auth_ctx *, const uint8_t *, size_t);
 int	lc_auth_final(struct lc_auth_ctx *, uint8_t *, size_t *);
-int	lc_auth(const struct lc_auth_impl *, uint8_t *, size_t *,
-	    const void *, const uint8_t *, size_t);
+int	lc_auth(const struct lc_auth_impl *, uint8_t *, size_t *, void *,
+	    const uint8_t *, size_t);
 
 struct lc_auth_ctx	*lc_auth_ctx_new(const struct lc_auth_impl *);
 void			 lc_auth_ctx_free(struct lc_auth_ctx *);
@@ -157,18 +157,18 @@ const struct lc_auth_impl	*lc_auth_impl_hmac_sha512(void);
  * Ciphers.
  */
 
-int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, const void *);
+int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, void *);
 int	lc_cipher_encrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t);
 int	lc_cipher_encrypt_final(struct lc_cipher_ctx *, uint8_t *, size_t *);
 int	lc_cipher_encrypt(const struct lc_cipher_impl *, uint8_t *, size_t *,
-	    const void *, const uint8_t *, size_t);
-int	lc_cipher_decrypt_init(struct lc_cipher_ctx *, const void *);
+	    void *, const uint8_t *, size_t);
+int	lc_cipher_decrypt_init(struct lc_cipher_ctx *, void *);
 int	lc_cipher_decrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t);
 int	lc_cipher_decrypt_final(struct lc_cipher_ctx *, uint8_t *, size_t *);
 int	lc_cipher_decrypt(const struct lc_cipher_impl *, uint8_t *, size_t *,
-	    const void *, const uint8_t *, size_t);
+	    void *, const uint8_t *, size_t);
 
 struct lc_cipher_ctx	*lc_cipher_ctx_new(const struct lc_cipher_impl *);
 void			 lc_cipher_ctx_free(struct lc_cipher_ctx *);
@@ -181,10 +181,10 @@ const struct lc_cipher_impl	*lc_cipher_impl_xchacha20(void);
  * Authenticated encryption with additional data.
  */
 
-int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *,
-	    const void *, const uint8_t *, size_t, const uint8_t *, size_t);
-int	lc_aead_open(const struct lc_aead_impl *, uint8_t *, size_t *,
-	    const void *, const uint8_t *, size_t, const uint8_t *, size_t);
+int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *, void *,
+	    const uint8_t *, size_t, const uint8_t *, size_t);
+int	lc_aead_open(const struct lc_aead_impl *, uint8_t *, size_t *, void *,
+	    const uint8_t *, size_t, const uint8_t *, size_t);
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
 const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);

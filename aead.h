@@ -19,8 +19,8 @@
 
 
 struct lc_aead_impl {
-	int	(*seal)(uint8_t *, size_t *, const void *, const uint8_t *,
-		    size_t, const uint8_t *, size_t);
-	int	(*open)(uint8_t *, size_t *, const void *, const uint8_t *,
-		    size_t, const uint8_t *, size_t);
+	int	(*seal)(uint8_t *, size_t *, void *, const uint8_t *, size_t,
+		    const uint8_t *, size_t);
+	int	(*open)(uint8_t *, size_t *, void *, const uint8_t *, size_t,
+		    const uint8_t *, size_t);
 };
