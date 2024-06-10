@@ -45,7 +45,7 @@ struct kwrunner {
 };
 
 
-static int	hmac_sha2_runner(const struct lc_auth_impl *,
+static int	hmac_sha2_runner(const struct lc_hash_impl *,
 		    const struct testcase *, int);
 static int	hmac_sha224_runner(const struct testcase *, int);
 static int	hmac_sha256_runner(const struct testcase *, int);
@@ -220,11 +220,10 @@ main(int argc, char *argv[])
 }
 
 static int
-hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
+hmac_sha2_runner(const struct lc_hash_impl *impl, const struct testcase *c,
     int verbose)
 {
 	struct lc_hmac_params	 params;
-	struct lc_auth_ctx	*ctx;
 	uint8_t			*buf;
 	size_t			 olen;
 
@@ -233,20 +232,20 @@ hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
 	params.key = c->key;
 	params.keylen = c->keylen;
 
-	ctx = lc_auth_ctx_new(impl);
-	if (ctx == NULL)
-		errx(1, "can't allocate ctx");
+	params.hash = lc_hash_ctx_new(impl);
+	if (params.hash == NULL)
+		return 0;
 
-	if (!lc_auth_init(ctx, &params) ||
-	    !lc_auth_update(ctx, c->msg, c->msglen) ||
-	    !lc_auth_final(ctx, NULL, &olen))
+	if (!lc_auth(lc_auth_impl_hmac(), NULL, &olen, &params, c->msg,
+	    c->msglen))
 		return 0;
 
 	buf = malloc(olen);
 	if (buf == NULL)
 		err(1, "out of memory");
 
-	if (!lc_auth_final(ctx, buf, &olen))
+	if (!lc_auth(lc_auth_impl_hmac(), buf, &olen, &params, c->msg,
+	    c->msglen))
 		return 0;
 
 	/*
@@ -267,7 +266,7 @@ hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
 	}
 
 	free(buf);
-	lc_auth_ctx_free(ctx);
+	lc_hash_ctx_free(params.hash);
 
 	return 1;
 }
@@ -275,23 +274,23 @@ hmac_sha2_runner(const struct lc_auth_impl *impl, const struct testcase *c,
 static int
 hmac_sha224_runner(const struct testcase *c, int verbose)
 {
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha224(), c, verbose);
+	return hmac_sha2_runner(lc_hash_impl_sha224(), c, verbose);
 }
 
 static int
 hmac_sha256_runner(const struct testcase *c, int verbose)
 {
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha256(), c, verbose);
+	return hmac_sha2_runner(lc_hash_impl_sha256(), c, verbose);
 }
 
 static int
 hmac_sha384_runner(const struct testcase *c, int verbose)
 {
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha384(), c, verbose);
+	return hmac_sha2_runner(lc_hash_impl_sha384(), c, verbose);
 }
 
 static int
 hmac_sha512_runner(const struct testcase *c, int verbose)
 {
-	return hmac_sha2_runner(lc_auth_impl_hmac_sha512(), c, verbose);
+	return hmac_sha2_runner(lc_hash_impl_sha512(), c, verbose);
 }

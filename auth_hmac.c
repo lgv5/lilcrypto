@@ -20,8 +20,6 @@
 #include "auth.h"
 #include "hash.h"
 #include "impl_hmac.h"
-#include "impl_sha256.h"
-#include "impl_sha512.h"
 
 #include "util.h"
 
@@ -31,52 +29,34 @@
 
 
 static int
-hmac_common_init(void *arg, const uint8_t *key, size_t keylen)
+hmac_init(void *arg, void *initparams)
 {
-	struct hmac_ctx	*ctx = arg;
-	uint8_t		 ikeypad[HMAC_BLOCKLEN_MAX];
-	size_t		 i, olen;
+	struct hmac_ctx		*ctx = arg;
+	struct lc_hmac_params	*params = initparams;
+	uint8_t			 ikeypad[HMAC_BLOCKLEN_MAX];
+	size_t			 i, olen, blen, keylen;
 
-	if (keylen > ctx->blocksz) {
-		if (!lc_hash_init(ctx->hctx) ||
-		    !lc_hash_update(ctx->hctx, key, keylen) ||
-		    !lc_hash_final(ctx->hctx, ctx->key, &olen))
+	ctx->hash = params->hash;
+	keylen = params->keylen;
+	blen = params->hash->impl->blocklen;
+
+	if (keylen > blen) {
+		if (!lc_hash(ctx->hash->impl, ctx->key, &olen, params->key,
+		    keylen))
 			return 0;
 		keylen = olen;
 	} else
 		for (i = 0; i < keylen; i++)
-			ctx->key[i] = key[i];
+			ctx->key[i] = params->key[i];
 
-	for (i = keylen; i < ctx->blocksz; i++)
+	for (i = keylen; i < blen; i++)
 		ctx->key[i] = 0;
 
-	for (i = 0; i < ctx->blocksz; i++)
+	for (i = 0; i < blen; i++)
 		ikeypad[i] = ctx->key[i] ^ HMAC_IPAD;
 
-	return lc_hash_init(ctx->hctx) &&
-	    lc_hash_update(ctx->hctx, ikeypad, ctx->blocksz);
-}
-
-static int
-hmac_sha224_sha256_init(void *arg, void *initparams)
-{
-	struct lc_hmac_params	*params = initparams;
-	struct hmac_ctx		*ctx = arg;
-
-	ctx->blocksz = LC_SHA256_BLOCKLEN;
-
-	return hmac_common_init(ctx, params->key, params->keylen);
-}
-
-static int
-hmac_sha384_sha512_init(void *arg, void *initparams)
-{
-	struct lc_hmac_params	*params = initparams;
-	struct hmac_ctx		*ctx = arg;
-
-	ctx->blocksz = LC_SHA512_BLOCKLEN;
-
-	return hmac_common_init(ctx, params->key, params->keylen);
+	return lc_hash_init(ctx->hash) &&
+	    lc_hash_update(ctx->hash, ikeypad, blen);
 }
 
 static int
@@ -84,153 +64,78 @@ hmac_update(void *arg, const uint8_t *in, size_t inlen)
 {
 	struct hmac_ctx	*ctx = arg;
 
-	return lc_hash_update(ctx->hctx, in, inlen);
+	return lc_hash_update(ctx->hash, in, inlen);
 }
 
 static int
 hmac_final(void *arg, uint8_t *out, size_t *outlen)
 {
-	struct hmac_ctx		*ctx = arg;
-	struct lc_hash_ctx	*hctx;
-	uint8_t			 m[HMAC_BLOCKLEN_MAX],
-				    okeypad[HMAC_BLOCKLEN_MAX];
-	size_t			 i, olen;
-	int			 rc;
+	struct hmac_ctx	*ctx = arg;
+	uint8_t		 m[HMAC_BLOCKLEN_MAX], okeypad[HMAC_BLOCKLEN_MAX];
+	size_t		 i, olen, blen;
+	int		 rc;
 
 	if (out == NULL) {
-		(void)lc_hash_final(ctx->hctx, NULL, outlen);
+		*outlen = ctx->hash->impl->hashlen;
 		return 1;
 	}
 
-	hctx = ctx->hctx;
-
 	*outlen = 0;
-	for (i = 0; i < ctx->blocksz; i++)
+	blen = ctx->hash->impl->blocklen;
+
+	for (i = 0; i < blen; i++)
 		okeypad[i] = ctx->key[i] ^ HMAC_OPAD;
 
-	rc = lc_hash_final(ctx->hctx, m, &olen) &&
-	    lc_hash_init(ctx->hctx) &&
-	    lc_hash_update(ctx->hctx, okeypad, ctx->blocksz) &&
-	    lc_hash_update(ctx->hctx, m, olen) &&
-	    lc_hash_final(ctx->hctx, out, outlen);
+	rc = lc_hash_final(ctx->hash, m, &olen) &&
+	    lc_hash_init(ctx->hash) &&
+	    lc_hash_update(ctx->hash, okeypad, blen) &&
+	    lc_hash_update(ctx->hash, m, olen) &&
+	    lc_hash_final(ctx->hash, out, outlen);
 
 	lc_scrub(ctx, sizeof(*ctx));
-	ctx->hctx = hctx;
 
 	return rc;
 }
 
-static void *
-hmac_common_ctx_new(const struct lc_hash_impl *impl)
+static int
+hmac_auth(uint8_t *out, size_t *outlen, void *initparams, const uint8_t *in,
+    size_t inlen)
 {
-	struct hmac_ctx	*ctx;
+	struct lc_hmac_params	*params = initparams;
+	struct hmac_ctx		 ctx;
 
-	ctx = malloc(sizeof(*ctx));
-	if (ctx == NULL)
-		return NULL;
-	ctx->hctx = lc_hash_ctx_new(impl);
-	if (ctx->hctx == NULL) {
-		free(ctx);
-		return NULL;
+	if (out == NULL) {
+		*outlen = params->hash->impl->hashlen;
+		return 1;
 	}
 
-	return ctx;
+	return hmac_init(&ctx, initparams) &&
+	    hmac_update(&ctx, in, inlen) &&
+	    hmac_final(&ctx, out, outlen);
 }
 
 static void *
-hmac_sha224_ctx_new(void)
+hmac_ctx_new(void)
 {
-	return hmac_common_ctx_new(lc_hash_impl_sha224());
-}
-
-static void *
-hmac_sha256_ctx_new(void)
-{
-	return hmac_common_ctx_new(lc_hash_impl_sha256());
-}
-
-static void *
-hmac_sha384_ctx_new(void)
-{
-	return hmac_common_ctx_new(lc_hash_impl_sha384());
-}
-
-static void *
-hmac_sha512_ctx_new(void)
-{
-	return hmac_common_ctx_new(lc_hash_impl_sha512());
-}
-
-static void
-hmac_ctx_free(void *arg)
-{
-	struct hmac_ctx	*ctx = arg;
-
-	if (ctx != NULL)
-		lc_hash_ctx_free(ctx->hctx);
+	return malloc(sizeof(struct hmac_ctx));
 }
 
 
-static struct lc_auth_impl	hmac_sha224_impl = {
-	.init = &hmac_sha224_sha256_init,
+static struct lc_auth_impl	hmac_impl = {
+	.init = &hmac_init,
 	.update = &hmac_update,
 	.final = &hmac_final,
-	.auth = NULL,
+	.auth = &hmac_auth,
 
-	.ctx_new = &hmac_sha224_ctx_new,
-	.ctx_free = &hmac_ctx_free,
-};
+	.ctx_new = &hmac_ctx_new,
+	.ctx_free = NULL,
 
-static struct lc_auth_impl	hmac_sha256_impl = {
-	.init = &hmac_sha224_sha256_init,
-	.update = &hmac_update,
-	.final = &hmac_final,
-	.auth = NULL,
-
-	.ctx_new = &hmac_sha256_ctx_new,
-	.ctx_free = &hmac_ctx_free,
-};
-
-static struct lc_auth_impl	hmac_sha384_impl = {
-	.init = &hmac_sha384_sha512_init,
-	.update = &hmac_update,
-	.final = &hmac_final,
-	.auth = NULL,
-
-	.ctx_new = &hmac_sha384_ctx_new,
-	.ctx_free = &hmac_ctx_free,
-};
-
-static struct lc_auth_impl	hmac_sha512_impl = {
-	.init = &hmac_sha384_sha512_init,
-	.update = &hmac_update,
-	.final = &hmac_final,
-	.auth = NULL,
-
-	.ctx_new = &hmac_sha512_ctx_new,
-	.ctx_free = &hmac_ctx_free,
+	.blocklen = 0,
+	.taglen = 0,
 };
 
 const struct lc_auth_impl *
-lc_auth_impl_hmac_sha224(void)
+lc_auth_impl_hmac(void)
 {
-	return &hmac_sha224_impl;
-}
-
-const struct lc_auth_impl *
-lc_auth_impl_hmac_sha256(void)
-{
-	return &hmac_sha256_impl;
-}
-
-const struct lc_auth_impl *
-lc_auth_impl_hmac_sha384(void)
-{
-	return &hmac_sha384_impl;
-}
-
-const struct lc_auth_impl *
-lc_auth_impl_hmac_sha512(void)
-{
-	return &hmac_sha512_impl;
+	return &hmac_impl;
 }

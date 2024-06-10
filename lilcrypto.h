@@ -72,8 +72,9 @@ struct lc_hash_impl;
 /* Authentication. */
 
 struct lc_hmac_params {
-	size_t	 keylen;
-	uint8_t	*key;
+	struct lc_hash_ctx	*hash;
+	size_t			 keylen;
+	uint8_t			*key;
 };
 
 struct lc_poly1305_params {
@@ -146,11 +147,8 @@ int	lc_auth(const struct lc_auth_impl *, uint8_t *, size_t *, void *,
 struct lc_auth_ctx	*lc_auth_ctx_new(const struct lc_auth_impl *);
 void			 lc_auth_ctx_free(struct lc_auth_ctx *);
 
+const struct lc_auth_impl	*lc_auth_impl_hmac(void);
 const struct lc_auth_impl	*lc_auth_impl_poly1305(void);
-const struct lc_auth_impl	*lc_auth_impl_hmac_sha224(void);
-const struct lc_auth_impl	*lc_auth_impl_hmac_sha256(void);
-const struct lc_auth_impl	*lc_auth_impl_hmac_sha384(void);
-const struct lc_auth_impl	*lc_auth_impl_hmac_sha512(void);
 
 
 /*

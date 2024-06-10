@@ -21,7 +21,6 @@
 
 
 struct hmac_ctx {
-	struct lc_hash_ctx	*hctx;
-	size_t			 blocksz;
+	struct lc_hash_ctx	*hash;
 	uint8_t			 key[HMAC_BLOCKLEN_MAX];
 };
