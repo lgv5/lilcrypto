@@ -23,4 +23,6 @@ struct lc_aead_impl {
 		    const uint8_t *, size_t);
 	int	(*open)(uint8_t *, size_t *, void *, const uint8_t *, size_t,
 		    const uint8_t *, size_t);
+
+	size_t	  blocklen;
 };

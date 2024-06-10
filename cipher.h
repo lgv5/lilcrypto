@@ -35,6 +35,8 @@ struct lc_cipher_impl {
 
 	void	*(*ctx_new)(void);
 	void	 (*ctx_free)(void *);
+
+	size_t	   blocklen;
 };
 
 struct lc_cipher_ctx {

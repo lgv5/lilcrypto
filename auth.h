@@ -26,6 +26,9 @@ struct lc_auth_impl {
 
 	void	*(*ctx_new)(void);
 	void	 (*ctx_free)(void *);
+
+	size_t	   blocklen;
+	size_t	   taglen;
 };
 
 struct lc_auth_ctx {

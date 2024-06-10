@@ -229,6 +229,8 @@ static struct lc_cipher_impl	chacha20_impl = {
 
 	.ctx_new = &chacha20_ctx_new,
 	.ctx_free = NULL,
+
+	.blocklen = LC_CHACHA20_BLOCKLEN,
 };
 
 static struct lc_cipher_impl	xchacha20_impl = {
@@ -244,6 +246,8 @@ static struct lc_cipher_impl	xchacha20_impl = {
 
 	.ctx_new = &chacha20_ctx_new,
 	.ctx_free = NULL,
+
+	.blocklen = LC_XCHACHA20_BLOCKLEN,
 };
 
 const struct lc_cipher_impl *

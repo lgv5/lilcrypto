@@ -165,6 +165,9 @@ static struct lc_auth_impl	poly1305_impl = {
 
 	.ctx_new = &poly1305_ctx_new,
 	.ctx_free = NULL,
+
+	.blocklen = LC_POLY1305_BLOCKLEN,
+	.taglen = LC_POLY1305_TAGLEN,
 };
 
 const struct lc_auth_impl *
