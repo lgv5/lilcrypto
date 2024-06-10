@@ -26,6 +26,9 @@ struct lc_hash_impl {
 
 	void	*(*ctx_new)(void);
 	void	 (*ctx_free)(void *);
+
+	size_t	   blocklen;
+	size_t	   hashlen;
 };
 
 struct lc_hash_ctx {

@@ -271,6 +271,9 @@ static struct lc_hash_impl	sha384_impl = {
 
 	.ctx_new = &sha384_sha512_ctx_new,
 	.ctx_free = NULL,
+
+	.blocklen = LC_SHA384_BLOCKLEN,
+	.hashlen = LC_SHA384_HASHLEN,
 };
 
 static struct lc_hash_impl	sha512_impl = {
@@ -281,6 +284,9 @@ static struct lc_hash_impl	sha512_impl = {
 
 	.ctx_new = &sha384_sha512_ctx_new,
 	.ctx_free = NULL,
+
+	.blocklen = LC_SHA512_BLOCKLEN,
+	.hashlen = LC_SHA512_HASHLEN,
 };
 
 const struct lc_hash_impl *
