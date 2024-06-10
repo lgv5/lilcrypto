@@ -256,12 +256,6 @@ sha512_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 	    sha512_final(&ctx, out, outlen);
 }
 
-static void *
-sha384_sha512_ctx_new(void)
-{
-	return malloc(sizeof(struct sha512_ctx));
-}
-
 
 static struct lc_hash_impl	sha384_impl = {
 	.init = &sha384_init,
@@ -269,9 +263,7 @@ static struct lc_hash_impl	sha384_impl = {
 	.final = &sha384_final,
 	.hash = &sha384_hash,
 
-	.ctx_new = &sha384_sha512_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct sha512_ctx),
 	.blocklen = LC_SHA384_BLOCKLEN,
 	.hashlen = LC_SHA384_HASHLEN,
 };
@@ -282,9 +274,7 @@ static struct lc_hash_impl	sha512_impl = {
 	.final = &sha512_final,
 	.hash = &sha512_hash,
 
-	.ctx_new = &sha384_sha512_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct sha512_ctx),
 	.blocklen = LC_SHA512_BLOCKLEN,
 	.hashlen = LC_SHA512_HASHLEN,
 };

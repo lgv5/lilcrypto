@@ -251,12 +251,6 @@ sha256_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 	    sha256_final(&ctx, out, outlen);
 }
 
-static void *
-sha224_sha256_ctx_new(void)
-{
-	return malloc(sizeof(struct sha256_ctx));
-}
-
 
 static struct lc_hash_impl	sha224_impl = {
 	.init = &sha224_init,
@@ -264,9 +258,7 @@ static struct lc_hash_impl	sha224_impl = {
 	.final = &sha224_final,
 	.hash = &sha224_hash,
 
-	.ctx_new = &sha224_sha256_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct sha256_ctx),
 	.blocklen = LC_SHA224_BLOCKLEN,
 	.hashlen = LC_SHA224_HASHLEN,
 };
@@ -277,9 +269,7 @@ static struct lc_hash_impl	sha256_impl = {
 	.final = &sha256_final,
 	.hash = &sha256_hash,
 
-	.ctx_new = &sha224_sha256_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct sha256_ctx),
 	.blocklen = LC_SHA256_BLOCKLEN,
 	.hashlen = LC_SHA256_HASHLEN,
 };

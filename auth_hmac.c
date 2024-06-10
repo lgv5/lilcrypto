@@ -114,12 +114,6 @@ hmac_auth(uint8_t *out, size_t *outlen, void *initparams, const uint8_t *in,
 	    hmac_final(&ctx, out, outlen);
 }
 
-static void *
-hmac_ctx_new(void)
-{
-	return malloc(sizeof(struct hmac_ctx));
-}
-
 
 static struct lc_auth_impl	hmac_impl = {
 	.init = &hmac_init,
@@ -127,9 +121,7 @@ static struct lc_auth_impl	hmac_impl = {
 	.final = &hmac_final,
 	.auth = &hmac_auth,
 
-	.ctx_new = &hmac_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct hmac_ctx),
 	.blocklen = 0,
 	.taglen = 0,
 };

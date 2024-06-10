@@ -54,8 +54,8 @@ lc_hash_ctx_new(const struct lc_hash_impl *impl)
 	ctx = malloc(sizeof(*ctx));
 	if (ctx == NULL)
 		return NULL;
-	if (impl->ctx_new != NULL) {
-		ctx->arg = impl->ctx_new();
+	if (impl->argsz > 0) {
+		ctx->arg = malloc(impl->argsz);
 		if (ctx->arg == NULL) {
 			free(ctx);
 			return NULL;
@@ -70,10 +70,7 @@ lc_hash_ctx_new(const struct lc_hash_impl *impl)
 void
 lc_hash_ctx_free(struct lc_hash_ctx *ctx)
 {
-	if (ctx != NULL) {
-		if (ctx->impl != NULL && ctx->impl->ctx_free != NULL)
-			ctx->impl->ctx_free(ctx->arg);
+	if (ctx != NULL)
 		free(ctx->arg);
-	}
 	free(ctx);
 }

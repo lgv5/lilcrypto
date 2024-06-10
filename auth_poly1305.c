@@ -150,12 +150,6 @@ poly1305_auth(uint8_t *out, size_t *outlen, void *initparams,
 	    poly1305_final(&ctx, out, outlen);
 }
 
-static void *
-poly1305_ctx_new(void)
-{
-	return malloc(sizeof(struct poly1305_ctx));
-}
-
 
 static struct lc_auth_impl	poly1305_impl = {
 	.init = &poly1305_init,
@@ -163,9 +157,7 @@ static struct lc_auth_impl	poly1305_impl = {
 	.final = &poly1305_final,
 	.auth = &poly1305_auth,
 
-	.ctx_new = &poly1305_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct poly1305_ctx),
 	.blocklen = LC_POLY1305_BLOCKLEN,
 	.taglen = LC_POLY1305_TAGLEN,
 };

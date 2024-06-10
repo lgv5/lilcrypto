@@ -19,16 +19,14 @@
 
 
 struct lc_auth_impl {
-	int	 (*init)(void *, void *);
-	int	 (*update)(void *, const uint8_t *, size_t);
-	int	 (*final)(void *, uint8_t *, size_t *);
-	int	 (*auth)(uint8_t *, size_t *, void *, const uint8_t *, size_t);
+	int	(*init)(void *, void *);
+	int	(*update)(void *, const uint8_t *, size_t);
+	int	(*final)(void *, uint8_t *, size_t *);
+	int	(*auth)(uint8_t *, size_t *, void *, const uint8_t *, size_t);
 
-	void	*(*ctx_new)(void);
-	void	 (*ctx_free)(void *);
-
-	size_t	   blocklen;
-	size_t	   taglen;
+	size_t	  argsz;
+	size_t	  blocklen;
+	size_t	  taglen;
 };
 
 struct lc_auth_ctx {

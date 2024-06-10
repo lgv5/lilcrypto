@@ -19,16 +19,14 @@
 
 
 struct lc_hash_impl {
-	int	 (*init)(void *);
-	int	 (*update)(void *, const uint8_t *, size_t);
-	int	 (*final)(void *, uint8_t *, size_t *);
-	int	 (*hash)(uint8_t *, size_t *, const uint8_t *, size_t);
+	int	(*init)(void *);
+	int	(*update)(void *, const uint8_t *, size_t);
+	int	(*final)(void *, uint8_t *, size_t *);
+	int	(*hash)(uint8_t *, size_t *, const uint8_t *, size_t);
 
-	void	*(*ctx_new)(void);
-	void	 (*ctx_free)(void *);
-
-	size_t	   blocklen;
-	size_t	   hashlen;
+	size_t	  argsz;
+	size_t	  blocklen;
+	size_t	  hashlen;
 };
 
 struct lc_hash_ctx {

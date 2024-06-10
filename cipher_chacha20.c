@@ -209,12 +209,6 @@ chacha20_anycrypt(uint8_t *out, size_t *outlen, void *initparams,
 	return rc;
 }
 
-static void *
-chacha20_ctx_new(void)
-{
-	return malloc(sizeof(struct chacha20_ctx));
-}
-
 
 static struct lc_cipher_impl	chacha20_impl = {
 	.encrypt_init = &chacha20_anycrypt_init,
@@ -227,9 +221,7 @@ static struct lc_cipher_impl	chacha20_impl = {
 	.decrypt_final = &chacha20_anycrypt_final,
 	.decrypt = &chacha20_anycrypt,
 
-	.ctx_new = &chacha20_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct chacha20_ctx),
 	.blocklen = LC_CHACHA20_BLOCKLEN,
 };
 
@@ -244,9 +236,7 @@ static struct lc_cipher_impl	xchacha20_impl = {
 	.decrypt_final = &chacha20_anycrypt_final,
 	.decrypt = &chacha20_anycrypt,
 
-	.ctx_new = &chacha20_ctx_new,
-	.ctx_free = NULL,
-
+	.argsz = sizeof(struct chacha20_ctx),
 	.blocklen = LC_XCHACHA20_BLOCKLEN,
 };
 
