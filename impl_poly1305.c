@@ -123,7 +123,7 @@
  * h0 = 0x2000002
  * t4 = 0x77fffffa57ffff
  *
- * which becomes 
+ * which becomes
  *
  * h4 = 0x257ffff
  * h3 = 0x3a95fff

@@ -28,7 +28,7 @@ hexdump_line(char *buf, const uint8_t *blob, size_t len, size_t off, int pad)
 {
 	/*
 	 * Format is
-	 * - 16-char hex offset (at most) 
+	 * - 16-char hex offset (at most)
 	 * - 2 spaces
 	 * - 2-char hex byte and a space (16 times)
 	 * - 2 spaces
