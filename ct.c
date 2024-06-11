@@ -25,10 +25,10 @@ lc_ct_cmp(const uint8_t *x, const uint8_t *y, size_t l)
 	for (; l > 0; l--)
 		r |= *x++ ^ *y++;
 
-	/* Ensures that if any bit is set, then bit 7 is set. */
-	r |= r << 4;
-	r |= r << 2;
-	r |= r << 1;
+	/* Ensures that if any bit is set, then LSB is set. */
+	r |= r >> 4;
+	r |= r >> 2;
+	r |= r >> 1;
 
-	return 0xffffffff + ((r & 0x80) >> 7);
+	return 0xffffffff + (r & 1);
 }
