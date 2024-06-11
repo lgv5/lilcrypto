@@ -209,6 +209,36 @@ chacha20_anycrypt(uint8_t *out, size_t *outlen, void *initparams,
 	return rc;
 }
 
+static int
+xchacha20_anycrypt(uint8_t *out, size_t *outlen, void *initparams,
+    const uint8_t *in, size_t inlen)
+{
+	struct chacha20_ctx	ctx;
+	size_t			l0, l1;
+	int			rc;
+
+	*outlen = 0;
+
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
+	    CHACHA20_CTRMAX)
+		return 0;
+
+	if (out == NULL) {
+		*outlen = inlen;
+		return 1;
+	}
+
+	rc = xchacha20_anycrypt_init(&ctx, initparams) &&
+	    chacha20_anycrypt_update(&ctx, out, &l0, in, inlen) &&
+	    chacha20_anycrypt_final(&ctx, out + l0, &l1);
+
+	if (rc)
+		*outlen = l0 + l1;
+
+	return rc;
+}
+
 
 static struct lc_cipher_impl	chacha20_impl = {
 	.encrypt_init = &chacha20_anycrypt_init,
@@ -229,12 +259,12 @@ static struct lc_cipher_impl	xchacha20_impl = {
 	.encrypt_init = &xchacha20_anycrypt_init,
 	.encrypt_update = &chacha20_anycrypt_update,
 	.encrypt_final = &chacha20_anycrypt_final,
-	.encrypt = &chacha20_anycrypt,
+	.encrypt = &xchacha20_anycrypt,
 
 	.decrypt_init = &xchacha20_anycrypt_init,
 	.decrypt_update = &chacha20_anycrypt_update,
 	.decrypt_final = &chacha20_anycrypt_final,
-	.decrypt = &chacha20_anycrypt,
+	.decrypt = &xchacha20_anycrypt,
 
 	.argsz = sizeof(struct chacha20_ctx),
 	.blocklen = LC_XCHACHA20_BLOCKLEN,
