@@ -28,8 +28,8 @@ struct chacha20_state {
 	uint32_t	s[CHACHA20_BLOCKLEN_WORDS];
 	uint32_t	k[CHACHA20_KEY_WORDS];
 	uint32_t	n[CHACHA20_NONCE_WORDS];
-	size_t		mlen;
-	uint8_t		m[LC_CHACHA20_BLOCKLEN];
+	size_t		blen;
+	uint8_t		b[LC_CHACHA20_BLOCKLEN];
 };
 
 

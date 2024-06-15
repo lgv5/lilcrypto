@@ -24,8 +24,8 @@
 struct sha512_state {
 	uint64_t	h0, h1, h2, h3, h4, h5, h6, h7;
 	uint64_t	szhi, szlo;
-	size_t		mlen;
-	uint8_t		m[LC_SHA512_BLOCKLEN];
+	size_t		blen;
+	uint8_t		b[LC_SHA512_BLOCKLEN];
 };
 
 

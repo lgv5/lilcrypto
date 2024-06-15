@@ -79,7 +79,7 @@ sha512_block(struct sha512_state *state)
 	size_t		i;
 
 	for (i = 0; i < SHA512_BLOCKLEN_WORDS; i++)
-		W[i] = m[i] = load64be(&state->m[i * 8]);
+		W[i] = m[i] = load64be(&state->b[i * 8]);
 	for (; i < SHA512_ROUNDS; i++)
 		W[i] = SSIG1(W[i - 2]) + W[i - 7] + SSIG0(W[i - 15]) +
 		    W[i - 16];

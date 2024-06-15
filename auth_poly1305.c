@@ -58,9 +58,9 @@ poly1305_init(void *arg, void *initparams)
 	state->s2 = load32le(&params->key[24]);
 	state->s3 = load32le(&params->key[28]);
 
-	state->mlen = 0;
+	state->blen = 0;
 	for (i = 0; i < LC_POLY1305_BLOCKLEN; i++)
-		state->m[i] = 0;
+		state->b[i] = 0;
 
 	return 1;
 }
@@ -71,15 +71,15 @@ poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 	struct poly1305_state	*state = arg;
 	size_t 			 i;
 
-	for (i = 0; i + state->mlen < LC_POLY1305_BLOCKLEN && i < inlen; i++)
-		state->m[i + state->mlen] = in[i];
-	state->mlen += i;
+	for (i = 0; i + state->blen < LC_POLY1305_BLOCKLEN && i < inlen; i++)
+		state->b[i + state->blen] = in[i];
+	state->blen += i;
 	in += i;
 	inlen -= i;
 
-	if (state->mlen == LC_POLY1305_BLOCKLEN) {
+	if (state->blen == LC_POLY1305_BLOCKLEN) {
 		poly1305_block(state, 1);
-		state->mlen = 0;
+		state->blen = 0;
 	}
 
 	if (inlen == 0)
@@ -87,7 +87,7 @@ poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 
 	while (inlen >= LC_POLY1305_BLOCKLEN) {
 		for (i = 0; i < LC_POLY1305_BLOCKLEN; i++)
-			state->m[i] = in[i];
+			state->b[i] = in[i];
 		poly1305_block(state, 1);
 
 		in += LC_POLY1305_BLOCKLEN;
@@ -95,8 +95,8 @@ poly1305_update(void *arg, const uint8_t *in, size_t inlen)
 	}
 
 	for (i = 0; i < inlen; i++)
-		state->m[i] = in[i];
-	state->mlen = inlen;
+		state->b[i] = in[i];
+	state->blen = inlen;
 
 	return 1;
 }
@@ -112,12 +112,12 @@ poly1305_final(void *arg, uint8_t *out, size_t *outlen)
 	if (out == NULL)
 		return 1;
 
-	i = state->mlen;
+	i = state->blen;
 	if (i > 0) {
 		if (i < LC_POLY1305_BLOCKLEN) {
-			state->m[i++] = 1;
+			state->b[i++] = 1;
 			for (; i < LC_POLY1305_BLOCKLEN; i++)
-				state->m[i] = 0;
+				state->b[i] = 0;
 			poly1305_block(state, 0);
 		} else
 			poly1305_block(state, 1);

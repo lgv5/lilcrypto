@@ -71,9 +71,9 @@ sha384_init(void *arg)
 
 	state->szhi = state->szlo = 0;
 
-	state->mlen = 0;
+	state->blen = 0;
 	for (i = 0; i < LC_SHA512_BLOCKLEN; i++)
-		state->m[i] = 0;
+		state->b[i] = 0;
 
 	return 1;
 }
@@ -95,9 +95,9 @@ sha512_init(void *arg)
 
 	state->szhi = state->szlo = 0;
 
-	state->mlen = 0;
+	state->blen = 0;
 	for (i = 0; i < LC_SHA512_BLOCKLEN; i++)
-		state->m[i] = 0;
+		state->b[i] = 0;
 
 	return 1;
 }
@@ -116,15 +116,15 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 	} else
 		state->szlo += inlen;
 
-	for (i = 0; i + state->mlen < LC_SHA512_BLOCKLEN && i < inlen; i++)
-		state->m[i + state->mlen] = in[i];
-	state->mlen += i;
+	for (i = 0; i + state->blen < LC_SHA512_BLOCKLEN && i < inlen; i++)
+		state->b[i + state->blen] = in[i];
+	state->blen += i;
 	in += i;
 	inlen -= i;
 
-	if (state->mlen == LC_SHA512_BLOCKLEN) {
+	if (state->blen == LC_SHA512_BLOCKLEN) {
 		sha512_block(state);
-		state->mlen = 0;
+		state->blen = 0;
 	}
 
 	if (inlen == 0)
@@ -132,7 +132,7 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 
 	while (inlen >= LC_SHA512_BLOCKLEN) {
 		for (i = 0; i < LC_SHA512_BLOCKLEN; i++)
-			state->m[i] = in[i];
+			state->b[i] = in[i];
 		in += i;
 		inlen -= i;
 
@@ -140,8 +140,8 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 	}
 
 	for (i = 0; i < inlen; i++)
-		state->m[i] = in[i];
-	state->mlen = inlen;
+		state->b[i] = in[i];
+	state->blen = inlen;
 
 	return 1;
 }
@@ -163,20 +163,20 @@ sha384_sha512_final(struct sha512_state *state)
 {
 	size_t	i, mlen;
 
-	mlen = state->mlen;
-	state->m[mlen++] = 0x80;
+	mlen = state->blen;
+	state->b[mlen++] = 0x80;
 
 	if (mlen >= LC_SHA512_BLOCKLEN - 2 * sizeof(uint64_t)) {
 		for (i = mlen; i < LC_SHA512_BLOCKLEN; i++)
-			state->m[i] = 0;
+			state->b[i] = 0;
 		sha512_block(state);
 		mlen = 0;
 	}
 
 	for (i = mlen; i < LC_SHA512_BLOCKLEN - 2 * sizeof(uint64_t); i++)
-		state->m[i] = 0;
-	store64be(&state->m[i], (state->szhi << 3) | (state->szlo >> 63));
-	store64be(&state->m[i + sizeof(uint64_t)], state->szlo << 3);
+		state->b[i] = 0;
+	store64be(&state->b[i], (state->szhi << 3) | (state->szlo >> 63));
+	store64be(&state->b[i + sizeof(uint64_t)], state->szlo << 3);
 	sha512_block(state);
 }
 

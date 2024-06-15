@@ -24,8 +24,8 @@
 struct sha256_state {
 	uint32_t	h0, h1, h2, h3, h4, h5, h6, h7;
 	uint64_t	sz;
-	size_t		mlen;
-	uint8_t		m[LC_SHA256_BLOCKLEN];
+	size_t		blen;
+	uint8_t		b[LC_SHA256_BLOCKLEN];
 };
 
 

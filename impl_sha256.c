@@ -55,7 +55,7 @@ sha256_block(struct sha256_state *state)
 	size_t		i;
 
 	for (i = 0; i < SHA256_BLOCKLEN_WORDS; i++)
-		W[i] = m[i] = load32be(&state->m[i * 4]);
+		W[i] = m[i] = load32be(&state->b[i * 4]);
 	for (; i < SHA256_ROUNDS; i++)
 		W[i] = SSIG1(W[i - 2]) + W[i - 7] + SSIG0(W[i - 15]) +
 		    W[i - 16];

@@ -44,7 +44,7 @@ chacha20_anycrypt_init(void *arg, void *initparams)
 	state->n[0] = params->counter;
 	for (i = 1; i < CHACHA20_NONCE_WORDS; i++)
 		state->n[i] = load32le(&params->nonce[(i - 1) * 4]);
-	state->mlen = 0;
+	state->blen = 0;
 
 	return 1;
 }
@@ -62,7 +62,7 @@ xchacha20_anycrypt_init(void *arg, void *initparams)
 		state->k[i] = load32le(&params->key[i * 4]);
 	for (i = 0; i < CHACHA20_NONCE_WORDS; i++)
 		state->n[i] = load32le(&params->nonce[i * 4]);
-	state->mlen = 0;
+	state->blen = 0;
 
 	hchacha20_block(state);
 
@@ -91,35 +91,35 @@ chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
 	uint32_t		 h;
 
 	*outlen = 0;
-	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) - state->mlen)
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) - state->blen)
 		return 0;
-	blocks = (inlen + state->mlen + LC_CHACHA20_BLOCKLEN - 1) /
+	blocks = (inlen + state->blen + LC_CHACHA20_BLOCKLEN - 1) /
 	    LC_CHACHA20_BLOCKLEN;
 	if (blocks + state->n[0] > CHACHA20_CTRMAX)
 		return 0;
 
-	*outlen = state->mlen + inlen -
-	    ((state->mlen + inlen) % LC_CHACHA20_BLOCKLEN);
+	*outlen = state->blen + inlen -
+	    ((state->blen + inlen) % LC_CHACHA20_BLOCKLEN);
 	if (out == NULL)
 		return 1;
 
-	for (i = 0; i + state->mlen < LC_CHACHA20_BLOCKLEN && i < inlen; i++)
-		state->m[i + state->mlen] = in[i];
-	state->mlen += i;
+	for (i = 0; i + state->blen < LC_CHACHA20_BLOCKLEN && i < inlen; i++)
+		state->b[i + state->blen] = in[i];
+	state->blen += i;
 	in += i;
 	inlen -= i;
 
-	if (state->mlen == LC_CHACHA20_BLOCKLEN) {
+	if (state->blen == LC_CHACHA20_BLOCKLEN) {
 		chacha20_block(state);
 		state->n[0]++;
 
 		for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++) {
-			h = load32le(&state->m[i * 4]);
+			h = load32le(&state->b[i * 4]);
 			h ^= state->s[i];
 			store32le(&out[i * 4], h);
 		}
 		out += LC_CHACHA20_BLOCKLEN;
-		state->mlen = 0;
+		state->blen = 0;
 	}
 
 	if (inlen == 0)
@@ -140,8 +140,8 @@ chacha20_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
 	}
 
 	for (i = 0; i < inlen; i++)
-		state->m[i] = in[i];
-	state->mlen = inlen;
+		state->b[i] = in[i];
+	state->blen = inlen;
 
 	return 1;
 }
@@ -154,25 +154,25 @@ chacha20_anycrypt_final(void *arg, uint8_t *out, size_t *outlen)
 	uint32_t		 h;
 	uint8_t			 s[4];
 
-	*outlen = state->mlen;
+	*outlen = state->blen;
 	if (out == NULL)
 		return 1;
 
-	if (state->mlen > 0)
+	if (state->blen > 0)
 		chacha20_block(state);
 
-	for (i = 0; i < state->mlen / 4; i++) {
-		h = load32le(&state->m[i * 4]);
+	for (i = 0; i < state->blen / 4; i++) {
+		h = load32le(&state->b[i * 4]);
 		h ^= state->s[i];
 		store32le(&out[i * 4], h);
 	}
 	off = i * 4;
-	state->mlen -= off;
+	state->blen -= off;
 	out += off;
 
 	store32le(&s[0], state->s[i]);
-	for (i = 0; i < state->mlen; i++)
-		out[i] = state->m[i + off] ^ s[i];
+	for (i = 0; i < state->blen; i++)
+		out[i] = state->b[i + off] ^ s[i];
 
 	lc_scrub(state, sizeof(*state));
 

@@ -167,10 +167,10 @@ poly1305_block(struct poly1305_state *state, uint32_t hibit)
 	x3 = state->x3;
 	x4 = state->x4;
 
-	t0 = load32le(&state->m[0]);
-	t1 = load32le(&state->m[4]);
-	t2 = load32le(&state->m[8]);
-	t3 = load32le(&state->m[12]);
+	t0 = load32le(&state->b[0]);
+	t1 = load32le(&state->b[4]);
+	t2 = load32le(&state->b[8]);
+	t3 = load32le(&state->b[12]);
 	t4 = hibit;
 
 	h0 += t0 & 0x3ffffff;

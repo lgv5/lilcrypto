@@ -25,8 +25,8 @@ struct poly1305_state {
 	uint32_t	r0, r1, r2, r3, r4;
 	uint32_t	x1, x2, x3, x4;
 	uint32_t	s0, s1, s2, s3;
-	size_t		mlen;
-	uint8_t		m[LC_POLY1305_BLOCKLEN];
+	size_t		blen;
+	uint8_t		b[LC_POLY1305_BLOCKLEN];
 };
 
 
