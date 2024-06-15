@@ -43,7 +43,7 @@
 
 
 void
-chacha20_block(struct chacha20_ctx *ctx)
+chacha20_block(struct chacha20_state *state)
 {
 	uint32_t	x[CHACHA20_BLOCKLEN_WORDS];
 	size_t		i;
@@ -52,21 +52,21 @@ chacha20_block(struct chacha20_ctx *ctx)
 	x[1] = SIGMA1;
 	x[2] = SIGMA2;
 	x[3] = SIGMA3;
-	x[4] = ctx->k[0];
-	x[5] = ctx->k[1];
-	x[6] = ctx->k[2];
-	x[7] = ctx->k[3];
-	x[8] = ctx->k[4];
-	x[9] = ctx->k[5];
-	x[10] = ctx->k[6];
-	x[11] = ctx->k[7];
-	x[12] = ctx->n[0];
-	x[13] = ctx->n[1];
-	x[14] = ctx->n[2];
-	x[15] = ctx->n[3];
+	x[4] = state->k[0];
+	x[5] = state->k[1];
+	x[6] = state->k[2];
+	x[7] = state->k[3];
+	x[8] = state->k[4];
+	x[9] = state->k[5];
+	x[10] = state->k[6];
+	x[11] = state->k[7];
+	x[12] = state->n[0];
+	x[13] = state->n[1];
+	x[14] = state->n[2];
+	x[15] = state->n[3];
 
 	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
-		ctx->s[i] = x[i];
+		state->s[i] = x[i];
 
 	for (i = 0; i < CHACHA20_ROUNDS; i++) {
 		QUARTERROUND(x[0], x[4], x[8], x[12]);
@@ -81,11 +81,11 @@ chacha20_block(struct chacha20_ctx *ctx)
 	}
 
 	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
-		ctx->s[i] += x[i];
+		state->s[i] += x[i];
 }
 
 void
-hchacha20_block(struct chacha20_ctx *ctx)
+hchacha20_block(struct chacha20_state *state)
 {
 	uint32_t	x[CHACHA20_BLOCKLEN_WORDS];
 	size_t		i;
@@ -94,18 +94,18 @@ hchacha20_block(struct chacha20_ctx *ctx)
 	x[1] = SIGMA1;
 	x[2] = SIGMA2;
 	x[3] = SIGMA3;
-	x[4] = ctx->k[0];
-	x[5] = ctx->k[1];
-	x[6] = ctx->k[2];
-	x[7] = ctx->k[3];
-	x[8] = ctx->k[4];
-	x[9] = ctx->k[5];
-	x[10] = ctx->k[6];
-	x[11] = ctx->k[7];
-	x[12] = ctx->n[0];
-	x[13] = ctx->n[1];
-	x[14] = ctx->n[2];
-	x[15] = ctx->n[3];
+	x[4] = state->k[0];
+	x[5] = state->k[1];
+	x[6] = state->k[2];
+	x[7] = state->k[3];
+	x[8] = state->k[4];
+	x[9] = state->k[5];
+	x[10] = state->k[6];
+	x[11] = state->k[7];
+	x[12] = state->n[0];
+	x[13] = state->n[1];
+	x[14] = state->n[2];
+	x[15] = state->n[3];
 
 	for (i = 0; i < CHACHA20_ROUNDS; i++) {
 		QUARTERROUND(x[0], x[4], x[8], x[12]);
@@ -120,5 +120,5 @@ hchacha20_block(struct chacha20_ctx *ctx)
 	}
 
 	for (i = 0; i < CHACHA20_BLOCKLEN_WORDS; i++)
-		ctx->s[i] = x[i];
+		state->s[i] = x[i];
 }

@@ -72,26 +72,26 @@ static const uint64_t K[SHA512_ROUNDS] = {
 #define SSIG1(x)	(rotr64(x, 19) ^ rotr64(x, 61) ^ (x >> 6))
 
 void
-sha512_block(struct sha512_ctx *ctx)
+sha512_block(struct sha512_state *state)
 {
 	uint64_t	m[SHA512_BLOCKLEN_WORDS], W[SHA512_ROUNDS];
 	uint64_t	a, b, c, d, e, f, g, h, T1, T2;
 	size_t		i;
 
 	for (i = 0; i < SHA512_BLOCKLEN_WORDS; i++)
-		W[i] = m[i] = load64be(&ctx->m[i * 8]);
+		W[i] = m[i] = load64be(&state->m[i * 8]);
 	for (; i < SHA512_ROUNDS; i++)
 		W[i] = SSIG1(W[i - 2]) + W[i - 7] + SSIG0(W[i - 15]) +
 		    W[i - 16];
 
-	a = ctx->h0;
-	b = ctx->h1;
-	c = ctx->h2;
-	d = ctx->h3;
-	e = ctx->h4;
-	f = ctx->h5;
-	g = ctx->h6;
-	h = ctx->h7;
+	a = state->h0;
+	b = state->h1;
+	c = state->h2;
+	d = state->h3;
+	e = state->h4;
+	f = state->h5;
+	g = state->h6;
+	h = state->h7;
 
 	for (i = 0; i < SHA512_ROUNDS; i++) {
 		T1 = h + BSIG1(e) + CH(e, f, g) + K[i] + W[i];
@@ -106,12 +106,12 @@ sha512_block(struct sha512_ctx *ctx)
 		a = T1 + T2;
 	}
 
-	ctx->h0 += a;
-	ctx->h1 += b;
-	ctx->h2 += c;
-	ctx->h3 += d;
-	ctx->h4 += e;
-	ctx->h5 += f;
-	ctx->h6 += g;
-	ctx->h7 += h;
+	state->h0 += a;
+	state->h1 += b;
+	state->h2 += c;
+	state->h3 += d;
+	state->h4 += e;
+	state->h5 += f;
+	state->h6 += g;
+	state->h7 += h;
 }

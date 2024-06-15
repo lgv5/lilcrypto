@@ -24,7 +24,7 @@
 #define CHACHA20_ROUNDS		10
 
 
-struct chacha20_ctx {
+struct chacha20_state {
 	uint32_t	s[CHACHA20_BLOCKLEN_WORDS];
 	uint32_t	k[CHACHA20_KEY_WORDS];
 	uint32_t	n[CHACHA20_NONCE_WORDS];
@@ -33,5 +33,5 @@ struct chacha20_ctx {
 };
 
 
-void	chacha20_block(struct chacha20_ctx *);
-void	hchacha20_block(struct chacha20_ctx *);
+void	chacha20_block(struct chacha20_state *);
+void	hchacha20_block(struct chacha20_state *);

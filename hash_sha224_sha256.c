@@ -56,23 +56,23 @@
 static int
 sha224_init(void *arg)
 {
-	struct sha256_ctx	*ctx = arg;
+	struct sha256_state	*state = arg;
 	size_t			 i;
 
-	ctx->h0 = SHA224_H0_0;
-	ctx->h1 = SHA224_H0_1;
-	ctx->h2 = SHA224_H0_2;
-	ctx->h3 = SHA224_H0_3;
-	ctx->h4 = SHA224_H0_4;
-	ctx->h5 = SHA224_H0_5;
-	ctx->h6 = SHA224_H0_6;
-	ctx->h7 = SHA224_H0_7;
+	state->h0 = SHA224_H0_0;
+	state->h1 = SHA224_H0_1;
+	state->h2 = SHA224_H0_2;
+	state->h3 = SHA224_H0_3;
+	state->h4 = SHA224_H0_4;
+	state->h5 = SHA224_H0_5;
+	state->h6 = SHA224_H0_6;
+	state->h7 = SHA224_H0_7;
 
-	ctx->sz = 0;
+	state->sz = 0;
 
-	ctx->mlen = 0;
+	state->mlen = 0;
 	for (i = 0; i < LC_SHA256_BLOCKLEN; i++)
-		ctx->m[i] = 0;
+		state->m[i] = 0;
 
 	return 1;
 }
@@ -80,23 +80,23 @@ sha224_init(void *arg)
 static int
 sha256_init(void *arg)
 {
-	struct sha256_ctx	*ctx = arg;
+	struct sha256_state	*state = arg;
 	size_t			 i;
 
-	ctx->h0 = SHA256_H0_0;
-	ctx->h1 = SHA256_H0_1;
-	ctx->h2 = SHA256_H0_2;
-	ctx->h3 = SHA256_H0_3;
-	ctx->h4 = SHA256_H0_4;
-	ctx->h5 = SHA256_H0_5;
-	ctx->h6 = SHA256_H0_6;
-	ctx->h7 = SHA256_H0_7;
+	state->h0 = SHA256_H0_0;
+	state->h1 = SHA256_H0_1;
+	state->h2 = SHA256_H0_2;
+	state->h3 = SHA256_H0_3;
+	state->h4 = SHA256_H0_4;
+	state->h5 = SHA256_H0_5;
+	state->h6 = SHA256_H0_6;
+	state->h7 = SHA256_H0_7;
 
-	ctx->sz = 0;
+	state->sz = 0;
 
-	ctx->mlen = 0;
+	state->mlen = 0;
 	for (i = 0; i < LC_SHA256_BLOCKLEN; i++)
-		ctx->m[i] = 0;
+		state->m[i] = 0;
 
 	return 1;
 }
@@ -104,22 +104,22 @@ sha256_init(void *arg)
 static int
 sha224_sha256_update(void *arg, const uint8_t *in, size_t inlen)
 {
-	struct sha256_ctx	*ctx = arg;
+	struct sha256_state	*state = arg;
 	size_t			 i;
 
-	if (inlen > SHA256_SZ_MAX - ctx->sz)
+	if (inlen > SHA256_SZ_MAX - state->sz)
 		return 0;
-	ctx->sz += inlen;
+	state->sz += inlen;
 
-	for (i = 0; i + ctx->mlen < LC_SHA256_BLOCKLEN && i < inlen; i++)
-		ctx->m[i + ctx->mlen] = in[i];
-	ctx->mlen += i;
+	for (i = 0; i + state->mlen < LC_SHA256_BLOCKLEN && i < inlen; i++)
+		state->m[i + state->mlen] = in[i];
+	state->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == LC_SHA256_BLOCKLEN) {
-		sha256_block(ctx);
-		ctx->mlen = 0;
+	if (state->mlen == LC_SHA256_BLOCKLEN) {
+		sha256_block(state);
+		state->mlen = 0;
 	}
 
 	if (inlen == 0)
@@ -127,16 +127,16 @@ sha224_sha256_update(void *arg, const uint8_t *in, size_t inlen)
 
 	while (inlen >= LC_SHA256_BLOCKLEN) {
 		for (i = 0; i < LC_SHA256_BLOCKLEN; i++)
-			ctx->m[i] = in[i];
+			state->m[i] = in[i];
 		in += i;
 		inlen -= i;
 
-		sha256_block(ctx);
+		sha256_block(state);
 	}
 
 	for (i = 0; i < inlen; i++)
-		ctx->m[i] = in[i];
-	ctx->mlen = inlen;
+		state->m[i] = in[i];
+	state->mlen = inlen;
 
 	return 1;
 }
@@ -154,45 +154,45 @@ sha256_update(void *arg, const uint8_t *in, size_t inlen)
 }
 
 static void
-sha224_sha256_final(struct sha256_ctx *ctx)
+sha224_sha256_final(struct sha256_state *state)
 {
 	size_t	i, mlen;
 
-	mlen = ctx->mlen;
-	ctx->m[mlen++] = 0x80;
+	mlen = state->mlen;
+	state->m[mlen++] = 0x80;
 
 	if (mlen >= LC_SHA256_BLOCKLEN - sizeof(uint64_t)) {
 		for (i = mlen; i < LC_SHA256_BLOCKLEN; i++)
-			ctx->m[i] = 0;
-		sha256_block(ctx);
+			state->m[i] = 0;
+		sha256_block(state);
 		mlen = 0;
 	}
 
 	for (i = mlen; i < LC_SHA256_BLOCKLEN - sizeof(uint64_t); i++)
-		ctx->m[i] = 0;
-	store64be(&ctx->m[i], ctx->sz << 3);
-	sha256_block(ctx);
+		state->m[i] = 0;
+	store64be(&state->m[i], state->sz << 3);
+	sha256_block(state);
 }
 
 static int
 sha224_final(void *arg, uint8_t *out, size_t *outlen)
 {
-	struct sha256_ctx	*ctx = arg;
+	struct sha256_state	*state = arg;
 
 	*outlen = LC_SHA224_HASHLEN;
 	if (out == NULL)
 		return 1;
 
-	sha224_sha256_final(ctx);
-	store32be(out, ctx->h0);
-	store32be(out + 4, ctx->h1);
-	store32be(out + 8, ctx->h2);
-	store32be(out + 12, ctx->h3);
-	store32be(out + 16, ctx->h4);
-	store32be(out + 20, ctx->h5);
-	store32be(out + 24, ctx->h6);
+	sha224_sha256_final(state);
+	store32be(out, state->h0);
+	store32be(out + 4, state->h1);
+	store32be(out + 8, state->h2);
+	store32be(out + 12, state->h3);
+	store32be(out + 16, state->h4);
+	store32be(out + 20, state->h5);
+	store32be(out + 24, state->h6);
 
-	lc_scrub(ctx, sizeof(*ctx));
+	lc_scrub(state, sizeof(*state));
 
 	return 1;
 }
@@ -200,23 +200,23 @@ sha224_final(void *arg, uint8_t *out, size_t *outlen)
 static int
 sha256_final(void *arg, uint8_t *out, size_t *outlen)
 {
-	struct sha256_ctx	*ctx = arg;
+	struct sha256_state	*state = arg;
 
 	*outlen = LC_SHA256_HASHLEN;
 	if (out == NULL)
 		return 1;
 
-	sha224_sha256_final(ctx);
-	store32be(out, ctx->h0);
-	store32be(out + 4, ctx->h1);
-	store32be(out + 8, ctx->h2);
-	store32be(out + 12, ctx->h3);
-	store32be(out + 16, ctx->h4);
-	store32be(out + 20, ctx->h5);
-	store32be(out + 24, ctx->h6);
-	store32be(out + 28, ctx->h7);
+	sha224_sha256_final(state);
+	store32be(out, state->h0);
+	store32be(out + 4, state->h1);
+	store32be(out + 8, state->h2);
+	store32be(out + 12, state->h3);
+	store32be(out + 16, state->h4);
+	store32be(out + 20, state->h5);
+	store32be(out + 24, state->h6);
+	store32be(out + 28, state->h7);
 
-	lc_scrub(ctx, sizeof(*ctx));
+	lc_scrub(state, sizeof(*state));
 
 	return 1;
 }
@@ -224,31 +224,31 @@ sha256_final(void *arg, uint8_t *out, size_t *outlen)
 static int
 sha224_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 {
-	struct sha256_ctx	ctx;
+	struct sha256_state	state;
 
 	if (out == NULL) {
 		*outlen = LC_SHA224_HASHLEN;
 		return 1;
 	}
 
-	return sha224_init(&ctx) &&
-	    sha224_update(&ctx, in, inlen) &&
-	    sha224_final(&ctx, out, outlen);
+	return sha224_init(&state) &&
+	    sha224_update(&state, in, inlen) &&
+	    sha224_final(&state, out, outlen);
 }
 
 static int
 sha256_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 {
-	struct sha256_ctx	ctx;
+	struct sha256_state	state;
 
 	if (out == NULL) {
 		*outlen = LC_SHA256_HASHLEN;
 		return 1;
 	}
 
-	return sha256_init(&ctx) &&
-	    sha256_update(&ctx, in, inlen) &&
-	    sha256_final(&ctx, out, outlen);
+	return sha256_init(&state) &&
+	    sha256_update(&state, in, inlen) &&
+	    sha256_final(&state, out, outlen);
 }
 
 
@@ -258,7 +258,7 @@ static struct lc_hash_impl	sha224_impl = {
 	.final = &sha224_final,
 	.hash = &sha224_hash,
 
-	.argsz = sizeof(struct sha256_ctx),
+	.argsz = sizeof(struct sha256_state),
 	.blocklen = LC_SHA224_BLOCKLEN,
 	.hashlen = LC_SHA224_HASHLEN,
 };
@@ -269,7 +269,7 @@ static struct lc_hash_impl	sha256_impl = {
 	.final = &sha256_final,
 	.hash = &sha256_hash,
 
-	.argsz = sizeof(struct sha256_ctx),
+	.argsz = sizeof(struct sha256_state),
 	.blocklen = LC_SHA256_BLOCKLEN,
 	.hashlen = LC_SHA256_HASHLEN,
 };

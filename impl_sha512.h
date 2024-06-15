@@ -21,7 +21,7 @@
 #define SHA512_ROUNDS		80
 
 
-struct sha512_ctx {
+struct sha512_state {
 	uint64_t	h0, h1, h2, h3, h4, h5, h6, h7;
 	uint64_t	szhi, szlo;
 	size_t		mlen;
@@ -29,4 +29,4 @@ struct sha512_ctx {
 };
 
 
-void	sha512_block(struct sha512_ctx *);
+void	sha512_block(struct sha512_state *);

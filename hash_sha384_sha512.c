@@ -57,23 +57,23 @@
 static int
 sha384_init(void *arg)
 {
-	struct sha512_ctx	*ctx = arg;
+	struct sha512_state	*state = arg;
 	size_t			 i;
 
-	ctx->h0 = SHA384_H0_0;
-	ctx->h1 = SHA384_H0_1;
-	ctx->h2 = SHA384_H0_2;
-	ctx->h3 = SHA384_H0_3;
-	ctx->h4 = SHA384_H0_4;
-	ctx->h5 = SHA384_H0_5;
-	ctx->h6 = SHA384_H0_6;
-	ctx->h7 = SHA384_H0_7;
+	state->h0 = SHA384_H0_0;
+	state->h1 = SHA384_H0_1;
+	state->h2 = SHA384_H0_2;
+	state->h3 = SHA384_H0_3;
+	state->h4 = SHA384_H0_4;
+	state->h5 = SHA384_H0_5;
+	state->h6 = SHA384_H0_6;
+	state->h7 = SHA384_H0_7;
 
-	ctx->szhi = ctx->szlo = 0;
+	state->szhi = state->szlo = 0;
 
-	ctx->mlen = 0;
+	state->mlen = 0;
 	for (i = 0; i < LC_SHA512_BLOCKLEN; i++)
-		ctx->m[i] = 0;
+		state->m[i] = 0;
 
 	return 1;
 }
@@ -81,23 +81,23 @@ sha384_init(void *arg)
 static int
 sha512_init(void *arg)
 {
-	struct sha512_ctx	*ctx = arg;
+	struct sha512_state	*state = arg;
 	size_t			 i;
 
-	ctx->h0 = SHA512_H0_0;
-	ctx->h1 = SHA512_H0_1;
-	ctx->h2 = SHA512_H0_2;
-	ctx->h3 = SHA512_H0_3;
-	ctx->h4 = SHA512_H0_4;
-	ctx->h5 = SHA512_H0_5;
-	ctx->h6 = SHA512_H0_6;
-	ctx->h7 = SHA512_H0_7;
+	state->h0 = SHA512_H0_0;
+	state->h1 = SHA512_H0_1;
+	state->h2 = SHA512_H0_2;
+	state->h3 = SHA512_H0_3;
+	state->h4 = SHA512_H0_4;
+	state->h5 = SHA512_H0_5;
+	state->h6 = SHA512_H0_6;
+	state->h7 = SHA512_H0_7;
 
-	ctx->szhi = ctx->szlo = 0;
+	state->szhi = state->szlo = 0;
 
-	ctx->mlen = 0;
+	state->mlen = 0;
 	for (i = 0; i < LC_SHA512_BLOCKLEN; i++)
-		ctx->m[i] = 0;
+		state->m[i] = 0;
 
 	return 1;
 }
@@ -105,26 +105,26 @@ sha512_init(void *arg)
 static int
 sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 {
-	struct sha512_ctx	*ctx = arg;
+	struct sha512_state	*state = arg;
 	size_t			 i;
 
-	if (inlen > SHA512_SZLO_MAX - ctx->szlo) {
-		if (ctx->szhi == SHA512_SZHI_MAX)
+	if (inlen > SHA512_SZLO_MAX - state->szlo) {
+		if (state->szhi == SHA512_SZHI_MAX)
 			return 0;
-		ctx->szlo += inlen;
-		ctx->szhi++;
+		state->szlo += inlen;
+		state->szhi++;
 	} else
-		ctx->szlo += inlen;
+		state->szlo += inlen;
 
-	for (i = 0; i + ctx->mlen < LC_SHA512_BLOCKLEN && i < inlen; i++)
-		ctx->m[i + ctx->mlen] = in[i];
-	ctx->mlen += i;
+	for (i = 0; i + state->mlen < LC_SHA512_BLOCKLEN && i < inlen; i++)
+		state->m[i + state->mlen] = in[i];
+	state->mlen += i;
 	in += i;
 	inlen -= i;
 
-	if (ctx->mlen == LC_SHA512_BLOCKLEN) {
-		sha512_block(ctx);
-		ctx->mlen = 0;
+	if (state->mlen == LC_SHA512_BLOCKLEN) {
+		sha512_block(state);
+		state->mlen = 0;
 	}
 
 	if (inlen == 0)
@@ -132,16 +132,16 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 
 	while (inlen >= LC_SHA512_BLOCKLEN) {
 		for (i = 0; i < LC_SHA512_BLOCKLEN; i++)
-			ctx->m[i] = in[i];
+			state->m[i] = in[i];
 		in += i;
 		inlen -= i;
 
-		sha512_block(ctx);
+		sha512_block(state);
 	}
 
 	for (i = 0; i < inlen; i++)
-		ctx->m[i] = in[i];
-	ctx->mlen = inlen;
+		state->m[i] = in[i];
+	state->mlen = inlen;
 
 	return 1;
 }
@@ -159,45 +159,45 @@ sha512_update(void *arg, const uint8_t *in, size_t inlen)
 }
 
 static void
-sha384_sha512_final(struct sha512_ctx *ctx)
+sha384_sha512_final(struct sha512_state *state)
 {
 	size_t	i, mlen;
 
-	mlen = ctx->mlen;
-	ctx->m[mlen++] = 0x80;
+	mlen = state->mlen;
+	state->m[mlen++] = 0x80;
 
 	if (mlen >= LC_SHA512_BLOCKLEN - 2 * sizeof(uint64_t)) {
 		for (i = mlen; i < LC_SHA512_BLOCKLEN; i++)
-			ctx->m[i] = 0;
-		sha512_block(ctx);
+			state->m[i] = 0;
+		sha512_block(state);
 		mlen = 0;
 	}
 
 	for (i = mlen; i < LC_SHA512_BLOCKLEN - 2 * sizeof(uint64_t); i++)
-		ctx->m[i] = 0;
-	store64be(&ctx->m[i], (ctx->szhi << 3) | (ctx->szlo >> 63));
-	store64be(&ctx->m[i + sizeof(uint64_t)], ctx->szlo << 3);
-	sha512_block(ctx);
+		state->m[i] = 0;
+	store64be(&state->m[i], (state->szhi << 3) | (state->szlo >> 63));
+	store64be(&state->m[i + sizeof(uint64_t)], state->szlo << 3);
+	sha512_block(state);
 }
 
 static int
 sha384_final(void *arg, uint8_t *out, size_t *outlen)
 {
-	struct sha512_ctx	*ctx = arg;
+	struct sha512_state	*state = arg;
 
 	*outlen = LC_SHA384_HASHLEN;
 	if (out == NULL)
 		return 1;
 
-	sha384_sha512_final(ctx);
-	store64be(out, ctx->h0);
-	store64be(out + 8, ctx->h1);
-	store64be(out + 16, ctx->h2);
-	store64be(out + 24, ctx->h3);
-	store64be(out + 32, ctx->h4);
-	store64be(out + 40, ctx->h5);
+	sha384_sha512_final(state);
+	store64be(out, state->h0);
+	store64be(out + 8, state->h1);
+	store64be(out + 16, state->h2);
+	store64be(out + 24, state->h3);
+	store64be(out + 32, state->h4);
+	store64be(out + 40, state->h5);
 
-	lc_scrub(ctx, sizeof(*ctx));
+	lc_scrub(state, sizeof(*state));
 
 	return 1;
 }
@@ -205,23 +205,23 @@ sha384_final(void *arg, uint8_t *out, size_t *outlen)
 static int
 sha512_final(void *arg, uint8_t *out, size_t *outlen)
 {
-	struct sha512_ctx	*ctx = arg;
+	struct sha512_state	*state = arg;
 
 	*outlen = LC_SHA512_HASHLEN;
 	if (out == NULL)
 		return 1;
 
-	sha384_sha512_final(ctx);
-	store64be(out, ctx->h0);
-	store64be(out + 8, ctx->h1);
-	store64be(out + 16, ctx->h2);
-	store64be(out + 24, ctx->h3);
-	store64be(out + 32, ctx->h4);
-	store64be(out + 40, ctx->h5);
-	store64be(out + 48, ctx->h6);
-	store64be(out + 56, ctx->h7);
+	sha384_sha512_final(state);
+	store64be(out, state->h0);
+	store64be(out + 8, state->h1);
+	store64be(out + 16, state->h2);
+	store64be(out + 24, state->h3);
+	store64be(out + 32, state->h4);
+	store64be(out + 40, state->h5);
+	store64be(out + 48, state->h6);
+	store64be(out + 56, state->h7);
 
-	lc_scrub(ctx, sizeof(*ctx));
+	lc_scrub(state, sizeof(*state));
 
 	return 1;
 }
@@ -229,31 +229,31 @@ sha512_final(void *arg, uint8_t *out, size_t *outlen)
 static int
 sha384_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 {
-	struct sha512_ctx	ctx;
+	struct sha512_state	state;
 
 	if (out == NULL) {
 		*outlen = LC_SHA384_HASHLEN;
 		return 1;
 	}
 
-	return sha384_init(&ctx) &&
-	    sha384_update(&ctx, in, inlen) &&
-	    sha384_final(&ctx, out, outlen);
+	return sha384_init(&state) &&
+	    sha384_update(&state, in, inlen) &&
+	    sha384_final(&state, out, outlen);
 }
 
 static int
 sha512_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 {
-	struct sha512_ctx	ctx;
+	struct sha512_state	state;
 
 	if (out == NULL) {
 		*outlen = LC_SHA512_HASHLEN;
 		return 1;
 	}
 
-	return sha512_init(&ctx) &&
-	    sha512_update(&ctx, in, inlen) &&
-	    sha512_final(&ctx, out, outlen);
+	return sha512_init(&state) &&
+	    sha512_update(&state, in, inlen) &&
+	    sha512_final(&state, out, outlen);
 }
 
 
@@ -263,7 +263,7 @@ static struct lc_hash_impl	sha384_impl = {
 	.final = &sha384_final,
 	.hash = &sha384_hash,
 
-	.argsz = sizeof(struct sha512_ctx),
+	.argsz = sizeof(struct sha512_state),
 	.blocklen = LC_SHA384_BLOCKLEN,
 	.hashlen = LC_SHA384_HASHLEN,
 };
@@ -274,7 +274,7 @@ static struct lc_hash_impl	sha512_impl = {
 	.final = &sha512_final,
 	.hash = &sha512_hash,
 
-	.argsz = sizeof(struct sha512_ctx),
+	.argsz = sizeof(struct sha512_state),
 	.blocklen = LC_SHA512_BLOCKLEN,
 	.hashlen = LC_SHA512_HASHLEN,
 };

@@ -20,7 +20,7 @@
 #define HMAC_BLOCKLEN_MAX	LC_SHA512_BLOCKLEN
 
 
-struct hmac_ctx {
+struct hmac_state {
 	struct lc_hash_ctx	*hash;
 	uint8_t			 key[HMAC_BLOCKLEN_MAX];
 };

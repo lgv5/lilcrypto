@@ -147,30 +147,30 @@
  */
 
 void
-poly1305_block(struct poly1305_ctx *ctx, uint32_t hibit)
+poly1305_block(struct poly1305_state *state, uint32_t hibit)
 {
 	uint64_t h0, h1, h2, h3, h4, t0, t1, t2, t3, t4;
 	uint32_t r0, r1, r2, r3, r4, x1, x2, x3, x4;
 
-	h0 = ctx->h0;
-	h1 = ctx->h1;
-	h2 = ctx->h2;
-	h3 = ctx->h3;
-	h4 = ctx->h4;
-	r0 = ctx->r0;
-	r1 = ctx->r1;
-	r2 = ctx->r2;
-	r3 = ctx->r3;
-	r4 = ctx->r4;
-	x1 = ctx->x1;
-	x2 = ctx->x2;
-	x3 = ctx->x3;
-	x4 = ctx->x4;
+	h0 = state->h0;
+	h1 = state->h1;
+	h2 = state->h2;
+	h3 = state->h3;
+	h4 = state->h4;
+	r0 = state->r0;
+	r1 = state->r1;
+	r2 = state->r2;
+	r3 = state->r3;
+	r4 = state->r4;
+	x1 = state->x1;
+	x2 = state->x2;
+	x3 = state->x3;
+	x4 = state->x4;
 
-	t0 = load32le(&ctx->m[0]);
-	t1 = load32le(&ctx->m[4]);
-	t2 = load32le(&ctx->m[8]);
-	t3 = load32le(&ctx->m[12]);
+	t0 = load32le(&state->m[0]);
+	t1 = load32le(&state->m[4]);
+	t2 = load32le(&state->m[8]);
+	t3 = load32le(&state->m[12]);
 	t4 = hibit;
 
 	h0 += t0 & 0x3ffffff;
@@ -199,24 +199,25 @@ poly1305_block(struct poly1305_ctx *ctx, uint32_t hibit)
 	h1 += h0 >> 26;
 	h0 &= 0x3ffffff;
 
-	ctx->h0 = h0;
-	ctx->h1 = h1;
-	ctx->h2 = h2;
-	ctx->h3 = h3;
-	ctx->h4 = h4;
+	state->h0 = h0;
+	state->h1 = h1;
+	state->h2 = h2;
+	state->h3 = h3;
+	state->h4 = h4;
 }
 
 void
-poly1305_reduce(struct poly1305_ctx *ctx, uint32_t a[POLY1305_TAGLEN_WORDS])
+poly1305_reduce(struct poly1305_state *state,
+    uint32_t a[POLY1305_TAGLEN_WORDS])
 {
 	uint64_t t0, t1, t2, t3, t4, g0, g1, g2, g3, g4;
 	uint32_t mask;
 
-	t0 = (ctx->h0 | (ctx->h1 << 26)) & 0xffffffff;
-	t1 = ((ctx->h1 >> 6) | (ctx->h2 << 20)) & 0xffffffff;
-	t2 = ((ctx->h2 >> 12) | (ctx->h3 << 14)) & 0xffffffff;
-	t3 = ((ctx->h3 >> 18) | (ctx->h4 << 8)) & 0xffffffff;
-	t4 = ctx->h4 >> 24;
+	t0 = (state->h0 | (state->h1 << 26)) & 0xffffffff;
+	t1 = ((state->h1 >> 6) | (state->h2 << 20)) & 0xffffffff;
+	t2 = ((state->h2 >> 12) | (state->h3 << 14)) & 0xffffffff;
+	t3 = ((state->h3 >> 18) | (state->h4 << 8)) & 0xffffffff;
+	t4 = state->h4 >> 24;
 
 	g0 = t0 + 5;
 	g1 = t1 + (g0 >> 32);
@@ -231,10 +232,10 @@ poly1305_reduce(struct poly1305_ctx *ctx, uint32_t a[POLY1305_TAGLEN_WORDS])
 	t2 = (t2 & ~mask) | (g2 & mask);
 	t3 = (t3 & ~mask) | (g3 & mask);
 
-	t0 += ctx->s0;
-	t1 += ctx->s1 + (t0 >> 32);
-	t2 += ctx->s2 + (t1 >> 32);
-	t3 += ctx->s3 + (t2 >> 32);
+	t0 += state->s0;
+	t1 += state->s1 + (t0 >> 32);
+	t2 += state->s2 + (t1 >> 32);
+	t3 += state->s3 + (t2 >> 32);
 
 	a[0] = t0 & 0xffffffff;
 	a[1] = t1 & 0xffffffff;

@@ -31,68 +31,69 @@
 static int
 hmac_init(void *arg, void *initparams)
 {
-	struct hmac_ctx		*ctx = arg;
+	struct hmac_state	*state = arg;
 	struct lc_hmac_params	*params = initparams;
 	uint8_t			 ikeypad[HMAC_BLOCKLEN_MAX];
 	size_t			 i, olen, blen, keylen;
 
-	ctx->hash = params->hash;
+	state->hash = params->hash;
 	keylen = params->keylen;
 	blen = params->hash->impl->blocklen;
 
 	if (keylen > blen) {
-		if (!lc_hash(ctx->hash->impl, ctx->key, &olen, params->key,
+		if (!lc_hash(state->hash->impl, state->key, &olen, params->key,
 		    keylen))
 			return 0;
 		keylen = olen;
 	} else
 		for (i = 0; i < keylen; i++)
-			ctx->key[i] = params->key[i];
+			state->key[i] = params->key[i];
 
 	for (i = keylen; i < blen; i++)
-		ctx->key[i] = 0;
+		state->key[i] = 0;
 
 	for (i = 0; i < blen; i++)
-		ikeypad[i] = ctx->key[i] ^ HMAC_IPAD;
+		ikeypad[i] = state->key[i] ^ HMAC_IPAD;
 
-	return lc_hash_init(ctx->hash) &&
-	    lc_hash_update(ctx->hash, ikeypad, blen);
+	return lc_hash_init(state->hash) &&
+	    lc_hash_update(state->hash, ikeypad, blen);
 }
 
 static int
 hmac_update(void *arg, const uint8_t *in, size_t inlen)
 {
-	struct hmac_ctx	*ctx = arg;
+	struct hmac_state	*state = arg;
 
-	return lc_hash_update(ctx->hash, in, inlen);
+	return lc_hash_update(state->hash, in, inlen);
 }
 
 static int
 hmac_final(void *arg, uint8_t *out, size_t *outlen)
 {
-	struct hmac_ctx	*ctx = arg;
-	uint8_t		 m[HMAC_BLOCKLEN_MAX], okeypad[HMAC_BLOCKLEN_MAX];
-	size_t		 i, olen, blen;
-	int		 rc;
+	struct hmac_state	*state = arg;
+	uint8_t			 m[HMAC_BLOCKLEN_MAX],
+				    okeypad[HMAC_BLOCKLEN_MAX];
+	size_t			 i, olen, blen;
+	int			 rc;
 
 	if (out == NULL) {
-		*outlen = ctx->hash->impl->hashlen;
+		*outlen = state->hash->impl->hashlen;
 		return 1;
 	}
 
 	*outlen = 0;
-	blen = ctx->hash->impl->blocklen;
+	blen = state->hash->impl->blocklen;
 
 	for (i = 0; i < blen; i++)
-		okeypad[i] = ctx->key[i] ^ HMAC_OPAD;
+		okeypad[i] = state->key[i] ^ HMAC_OPAD;
 
-	rc = lc_hash_final(ctx->hash, m, &olen) &&
-	    lc_hash_init(ctx->hash) &&
-	    lc_hash_update(ctx->hash, okeypad, blen) &&
-	    lc_hash_update(ctx->hash, m, olen) &&
-	    lc_hash_final(ctx->hash, out, outlen);
+	rc = lc_hash_final(state->hash, m, &olen) &&
+	    lc_hash_init(state->hash) &&
+	    lc_hash_update(state->hash, okeypad, blen) &&
+	    lc_hash_update(state->hash, m, olen) &&
+	    lc_hash_final(state->hash, out, outlen);
 
-	lc_scrub(ctx, sizeof(*ctx));
+	lc_scrub(state, sizeof(*state));
 
 	return rc;
 }
@@ -102,16 +103,16 @@ hmac_auth(uint8_t *out, size_t *outlen, void *initparams, const uint8_t *in,
     size_t inlen)
 {
 	struct lc_hmac_params	*params = initparams;
-	struct hmac_ctx		 ctx;
+	struct hmac_state	 state;
 
 	if (out == NULL) {
 		*outlen = params->hash->impl->hashlen;
 		return 1;
 	}
 
-	return hmac_init(&ctx, initparams) &&
-	    hmac_update(&ctx, in, inlen) &&
-	    hmac_final(&ctx, out, outlen);
+	return hmac_init(&state, initparams) &&
+	    hmac_update(&state, in, inlen) &&
+	    hmac_final(&state, out, outlen);
 }
 
 
@@ -121,7 +122,7 @@ static struct lc_auth_impl	hmac_impl = {
 	.final = &hmac_final,
 	.auth = &hmac_auth,
 
-	.argsz = sizeof(struct hmac_ctx),
+	.argsz = sizeof(struct hmac_state),
 	.blocklen = 0,
 	.taglen = 0,
 };

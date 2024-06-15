@@ -20,7 +20,7 @@
 #define POLY1305_TAGLEN_WORDS	(LC_POLY1305_TAGLEN / sizeof(uint32_t))
 
 
-struct poly1305_ctx {
+struct poly1305_state {
 	uint32_t	h0, h1, h2, h3, h4;
 	uint32_t	r0, r1, r2, r3, r4;
 	uint32_t	x1, x2, x3, x4;
@@ -30,6 +30,6 @@ struct poly1305_ctx {
 };
 
 
-void	poly1305_block(struct poly1305_ctx *, uint32_t);
-void	poly1305_reduce(struct poly1305_ctx *,
+void	poly1305_block(struct poly1305_state *, uint32_t);
+void	poly1305_reduce(struct poly1305_state *,
 	    uint32_t [POLY1305_TAGLEN_WORDS]);

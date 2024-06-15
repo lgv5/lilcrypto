@@ -21,7 +21,7 @@
 #define SHA256_ROUNDS		64
 
 
-struct sha256_ctx {
+struct sha256_state {
 	uint32_t	h0, h1, h2, h3, h4, h5, h6, h7;
 	uint64_t	sz;
 	size_t		mlen;
@@ -29,4 +29,4 @@ struct sha256_ctx {
 };
 
 
-void	sha256_block(struct sha256_ctx *);
+void	sha256_block(struct sha256_state *);
