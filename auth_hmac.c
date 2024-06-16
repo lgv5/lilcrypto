@@ -116,19 +116,19 @@ hmac_auth(uint8_t *out, size_t *outlen, void *initparams, const uint8_t *in,
 }
 
 
-static struct lc_auth_impl	hmac_impl = {
-	.init = &hmac_init,
-	.update = &hmac_update,
-	.final = &hmac_final,
-	.auth = &hmac_auth,
-
-	.argsz = sizeof(struct hmac_state),
-	.blocklen = 0,
-	.taglen = 0,
-};
-
 const struct lc_auth_impl *
 lc_auth_impl_hmac(void)
 {
+	static struct lc_auth_impl	hmac_impl = {
+		.init = &hmac_init,
+		.update = &hmac_update,
+		.final = &hmac_final,
+		.auth = &hmac_auth,
+
+		.argsz = sizeof(struct hmac_state),
+		.blocklen = 0,
+		.taglen = 0,
+	};
+
 	return &hmac_impl;
 }

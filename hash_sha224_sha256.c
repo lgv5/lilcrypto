@@ -252,36 +252,36 @@ sha256_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 }
 
 
-static struct lc_hash_impl	sha224_impl = {
-	.init = &sha224_init,
-	.update = &sha224_update,
-	.final = &sha224_final,
-	.hash = &sha224_hash,
-
-	.argsz = sizeof(struct sha256_state),
-	.blocklen = LC_SHA224_BLOCKLEN,
-	.hashlen = LC_SHA224_HASHLEN,
-};
-
-static struct lc_hash_impl	sha256_impl = {
-	.init = &sha256_init,
-	.update = &sha256_update,
-	.final = &sha256_final,
-	.hash = &sha256_hash,
-
-	.argsz = sizeof(struct sha256_state),
-	.blocklen = LC_SHA256_BLOCKLEN,
-	.hashlen = LC_SHA256_HASHLEN,
-};
-
 const struct lc_hash_impl *
 lc_hash_impl_sha224(void)
 {
+	static struct lc_hash_impl	sha224_impl = {
+		.init = &sha224_init,
+		.update = &sha224_update,
+		.final = &sha224_final,
+		.hash = &sha224_hash,
+
+		.argsz = sizeof(struct sha256_state),
+		.blocklen = LC_SHA224_BLOCKLEN,
+		.hashlen = LC_SHA224_HASHLEN,
+	};
+
 	return &sha224_impl;
 }
 
 const struct lc_hash_impl *
 lc_hash_impl_sha256(void)
 {
+	static struct lc_hash_impl	sha256_impl = {
+		.init = &sha256_init,
+		.update = &sha256_update,
+		.final = &sha256_final,
+		.hash = &sha256_hash,
+
+		.argsz = sizeof(struct sha256_state),
+		.blocklen = LC_SHA256_BLOCKLEN,
+		.hashlen = LC_SHA256_HASHLEN,
+	};
+
 	return &sha256_impl;
 }

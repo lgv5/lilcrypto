@@ -151,19 +151,19 @@ poly1305_auth(uint8_t *out, size_t *outlen, void *initparams,
 }
 
 
-static struct lc_auth_impl	poly1305_impl = {
-	.init = &poly1305_init,
-	.update = &poly1305_update,
-	.final = &poly1305_final,
-	.auth = &poly1305_auth,
-
-	.argsz = sizeof(struct poly1305_state),
-	.blocklen = LC_POLY1305_BLOCKLEN,
-	.taglen = LC_POLY1305_TAGLEN,
-};
-
 const struct lc_auth_impl *
 lc_auth_impl_poly1305(void)
 {
+	static struct lc_auth_impl	poly1305_impl = {
+		.init = &poly1305_init,
+		.update = &poly1305_update,
+		.final = &poly1305_final,
+		.auth = &poly1305_auth,
+
+		.argsz = sizeof(struct poly1305_state),
+		.blocklen = LC_POLY1305_BLOCKLEN,
+		.taglen = LC_POLY1305_TAGLEN,
+	};
+
 	return &poly1305_impl;
 }

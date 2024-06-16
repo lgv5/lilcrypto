@@ -257,36 +257,36 @@ sha512_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 }
 
 
-static struct lc_hash_impl	sha384_impl = {
-	.init = &sha384_init,
-	.update = &sha384_update,
-	.final = &sha384_final,
-	.hash = &sha384_hash,
-
-	.argsz = sizeof(struct sha512_state),
-	.blocklen = LC_SHA384_BLOCKLEN,
-	.hashlen = LC_SHA384_HASHLEN,
-};
-
-static struct lc_hash_impl	sha512_impl = {
-	.init = &sha512_init,
-	.update = &sha512_update,
-	.final = &sha512_final,
-	.hash = &sha512_hash,
-
-	.argsz = sizeof(struct sha512_state),
-	.blocklen = LC_SHA512_BLOCKLEN,
-	.hashlen = LC_SHA512_HASHLEN,
-};
-
 const struct lc_hash_impl *
 lc_hash_impl_sha384(void)
 {
+	static struct lc_hash_impl	sha384_impl = {
+		.init = &sha384_init,
+		.update = &sha384_update,
+		.final = &sha384_final,
+		.hash = &sha384_hash,
+
+		.argsz = sizeof(struct sha512_state),
+		.blocklen = LC_SHA384_BLOCKLEN,
+		.hashlen = LC_SHA384_HASHLEN,
+	};
+
 	return &sha384_impl;
 }
 
 const struct lc_hash_impl *
 lc_hash_impl_sha512(void)
 {
+	static struct lc_hash_impl	sha512_impl = {
+		.init = &sha512_init,
+		.update = &sha512_update,
+		.final = &sha512_final,
+		.hash = &sha512_hash,
+
+		.argsz = sizeof(struct sha512_state),
+		.blocklen = LC_SHA512_BLOCKLEN,
+		.hashlen = LC_SHA512_HASHLEN,
+	};
+
 	return &sha512_impl;
 }

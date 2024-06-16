@@ -240,44 +240,44 @@ xchacha20_anycrypt(uint8_t *out, size_t *outlen, void *initparams,
 }
 
 
-static struct lc_cipher_impl	chacha20_impl = {
-	.encrypt_init = &chacha20_anycrypt_init,
-	.encrypt_update = &chacha20_anycrypt_update,
-	.encrypt_final = &chacha20_anycrypt_final,
-	.encrypt = &chacha20_anycrypt,
-
-	.decrypt_init = &chacha20_anycrypt_init,
-	.decrypt_update = &chacha20_anycrypt_update,
-	.decrypt_final = &chacha20_anycrypt_final,
-	.decrypt = &chacha20_anycrypt,
-
-	.argsz = sizeof(struct chacha20_state),
-	.blocklen = LC_CHACHA20_BLOCKLEN,
-};
-
-static struct lc_cipher_impl	xchacha20_impl = {
-	.encrypt_init = &xchacha20_anycrypt_init,
-	.encrypt_update = &chacha20_anycrypt_update,
-	.encrypt_final = &chacha20_anycrypt_final,
-	.encrypt = &xchacha20_anycrypt,
-
-	.decrypt_init = &xchacha20_anycrypt_init,
-	.decrypt_update = &chacha20_anycrypt_update,
-	.decrypt_final = &chacha20_anycrypt_final,
-	.decrypt = &xchacha20_anycrypt,
-
- 	.argsz = sizeof(struct chacha20_state),
-	.blocklen = LC_XCHACHA20_BLOCKLEN,
-};
-
 const struct lc_cipher_impl *
 lc_cipher_impl_chacha20(void)
 {
+	static struct lc_cipher_impl	chacha20_impl = {
+		.encrypt_init = &chacha20_anycrypt_init,
+		.encrypt_update = &chacha20_anycrypt_update,
+		.encrypt_final = &chacha20_anycrypt_final,
+		.encrypt = &chacha20_anycrypt,
+
+		.decrypt_init = &chacha20_anycrypt_init,
+		.decrypt_update = &chacha20_anycrypt_update,
+		.decrypt_final = &chacha20_anycrypt_final,
+		.decrypt = &chacha20_anycrypt,
+
+		.argsz = sizeof(struct chacha20_state),
+		.blocklen = LC_CHACHA20_BLOCKLEN,
+	};
+
 	return &chacha20_impl;
 }
 
 const struct lc_cipher_impl *
 lc_cipher_impl_xchacha20(void)
 {
+	static struct lc_cipher_impl	xchacha20_impl = {
+		.encrypt_init = &xchacha20_anycrypt_init,
+		.encrypt_update = &chacha20_anycrypt_update,
+		.encrypt_final = &chacha20_anycrypt_final,
+		.encrypt = &xchacha20_anycrypt,
+
+		.decrypt_init = &xchacha20_anycrypt_init,
+		.decrypt_update = &chacha20_anycrypt_update,
+		.decrypt_final = &chacha20_anycrypt_final,
+		.decrypt = &xchacha20_anycrypt,
+
+		.argsz = sizeof(struct chacha20_state),
+		.blocklen = LC_XCHACHA20_BLOCKLEN,
+	};
+
 	return &xchacha20_impl;
 }
