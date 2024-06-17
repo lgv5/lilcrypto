@@ -16,8 +16,7 @@
 
 #include <stdlib.h>
 
-#include "lilcrypto.h"
-#include "cipher.h"
+#include "internal.h"
 
 
 int

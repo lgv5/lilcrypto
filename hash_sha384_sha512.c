@@ -14,11 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-
-#include "lilcrypto.h"
-#include "hash.h"
-#include "impl_sha512.h"
+#include "internal.h"
 #include "util.h"
 
 

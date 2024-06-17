@@ -14,8 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lilcrypto.h"
-#include "aead.h"
+#include "internal.h"
 
 
 int

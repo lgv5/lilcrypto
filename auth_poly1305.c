@@ -14,12 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-
-#include "lilcrypto.h"
-#include "auth.h"
-#include "impl_poly1305.h"
-
+#include "internal.h"
 #include "util.h"
 
 

@@ -15,10 +15,8 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
 
-#include "lilcrypto.h"
-#include "auth.h"
+#include "internal.h"
 
 
 int

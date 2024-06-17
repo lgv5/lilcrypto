@@ -14,10 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-
-#include "impl_sha256.h"
+#include "internal.h"
 #include "util.h"
 
 

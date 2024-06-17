@@ -14,13 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
-
-#include "lilcrypto.h"
-#include "auth.h"
-#include "hash.h"
-#include "impl_hmac.h"
-
+#include "internal.h"
 #include "util.h"
 
 

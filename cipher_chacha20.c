@@ -15,12 +15,8 @@
  */
 
 #include <limits.h>
-#include <stdlib.h>
 
-#include "lilcrypto.h"
-#include "cipher.h"
-#include "impl_chacha20.h"
-
+#include "internal.h"
 #include "util.h"
 
 
