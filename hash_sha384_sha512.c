@@ -146,18 +146,6 @@ sha384_sha512_update(void *arg, const uint8_t *in, size_t inlen)
 	return 1;
 }
 
-static int
-sha384_update(void *arg, const uint8_t *in, size_t inlen)
-{
-	return sha384_sha512_update(arg, in, inlen);
-}
-
-static int
-sha512_update(void *arg, const uint8_t *in, size_t inlen)
-{
-	return sha384_sha512_update(arg, in, inlen);
-}
-
 static void
 sha384_sha512_final(struct sha512_state *state)
 {
@@ -237,7 +225,7 @@ sha384_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 	}
 
 	return sha384_init(&state) &&
-	    sha384_update(&state, in, inlen) &&
+	    sha384_sha512_update(&state, in, inlen) &&
 	    sha384_final(&state, out, outlen);
 }
 
@@ -252,7 +240,7 @@ sha512_hash(uint8_t *out, size_t *outlen, const uint8_t *in, size_t inlen)
 	}
 
 	return sha512_init(&state) &&
-	    sha512_update(&state, in, inlen) &&
+	    sha384_sha512_update(&state, in, inlen) &&
 	    sha512_final(&state, out, outlen);
 }
 
@@ -262,7 +250,7 @@ lc_hash_impl_sha384(void)
 {
 	static struct lc_hash_impl	sha384_impl = {
 		.init = &sha384_init,
-		.update = &sha384_update,
+		.update = &sha384_sha512_update,
 		.final = &sha384_final,
 		.hash = &sha384_hash,
 
@@ -279,7 +267,7 @@ lc_hash_impl_sha512(void)
 {
 	static struct lc_hash_impl	sha512_impl = {
 		.init = &sha512_init,
-		.update = &sha512_update,
+		.update = &sha384_sha512_update,
 		.final = &sha512_final,
 		.hash = &sha512_hash,
 
