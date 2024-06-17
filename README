@@ -16,6 +16,7 @@ Utilities
 
 - Constant-time operations
   - [x] compare
+- Hexdump
 
 Hash
 ----
