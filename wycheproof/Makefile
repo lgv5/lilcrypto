@@ -40,7 +40,9 @@ tests-mac:
 	    ${WYCHEPROOF_DIR}/testvectors/hmac_sha384_test.json \
 	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha384_test.json \
 	    ${WYCHEPROOF_DIR}/testvectors/hmac_sha512_test.json \
-	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha512_test.json
+	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha512_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha512_224_test.json \
+	    ${WYCHEPROOF_DIR}/testvectors_v1/hmac_sha512_256_test.json
 .endfor
 
 .include <bsd.prog.mk>

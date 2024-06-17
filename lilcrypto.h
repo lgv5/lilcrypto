@@ -35,6 +35,10 @@
 #define LC_SHA384_HASHLEN	48
 #define LC_SHA512_BLOCKLEN	128
 #define LC_SHA512_HASHLEN	64
+#define LC_SHA512_224_BLOCKLEN	128
+#define LC_SHA512_224_HASHLEN	28
+#define LC_SHA512_256_BLOCKLEN	128
+#define LC_SHA512_256_HASHLEN	32
 
 /* Authentitcation. */
 #define LC_POLY1305_BLOCKLEN	16
@@ -132,6 +136,8 @@ const struct lc_hash_impl	*lc_hash_impl_sha224(void);
 const struct lc_hash_impl	*lc_hash_impl_sha256(void);
 const struct lc_hash_impl	*lc_hash_impl_sha384(void);
 const struct lc_hash_impl	*lc_hash_impl_sha512(void);
+const struct lc_hash_impl	*lc_hash_impl_sha512_224(void);
+const struct lc_hash_impl	*lc_hash_impl_sha512_256(void);
 
 
 /*

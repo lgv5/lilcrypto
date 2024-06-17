@@ -51,6 +51,8 @@ static int	hmac_sha224_runner(const struct testcase *, int);
 static int	hmac_sha256_runner(const struct testcase *, int);
 static int	hmac_sha384_runner(const struct testcase *, int);
 static int	hmac_sha512_runner(const struct testcase *, int);
+static int	hmac_sha512_224_runner(const struct testcase *, int);
+static int	hmac_sha512_256_runner(const struct testcase *, int);
 
 
 static inline uint8_t
@@ -103,6 +105,8 @@ static int
 		{ "HMACSHA256", &hmac_sha256_runner },
 		{ "HMACSHA384", &hmac_sha384_runner },
 		{ "HMACSHA512", &hmac_sha512_runner },
+		{ "HMACSHA512/224", &hmac_sha512_224_runner },
+		{ "HMACSHA512/256", &hmac_sha512_256_runner },
 	};
 	struct kwrunner			*match;
 
@@ -293,4 +297,16 @@ static int
 hmac_sha512_runner(const struct testcase *c, int verbose)
 {
 	return hmac_sha2_runner(lc_hash_impl_sha512(), c, verbose);
+}
+
+static int
+hmac_sha512_224_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_hash_impl_sha512_224(), c, verbose);
+}
+
+static int
+hmac_sha512_256_runner(const struct testcase *c, int verbose)
+{
+	return hmac_sha2_runner(lc_hash_impl_sha512_256(), c, verbose);
 }
