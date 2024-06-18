@@ -52,6 +52,12 @@ ECC
   - [ ] Ed25519 (EdDSA)
   - [ ] X25519 (ECDH)
 
+KDF
+---
+
+- [x] HKDF
+
+
 Nice-to-haves
 =============
 
@@ -85,8 +91,3 @@ AEAD
 - [ ] Camellia-GCM
 - [ ] Salsa20-Poly1305 (no Wycherproof test vector suite)
 - [ ] XSalsa20-Poly1305 (no Wycherproof test vector suite)
-
-KDF
----
-
-- [ ] HKDF

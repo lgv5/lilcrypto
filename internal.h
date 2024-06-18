@@ -27,6 +27,7 @@
 /* Authentitcation. */
 
 #define HMAC_BLOCKLEN_MAX	LC_SHA512_BLOCKLEN
+#define HMAC_HASHLEN_MAX	LC_SHA512_HASHLEN
 
 #define POLY1305_TAGLEN_WORDS	(LC_POLY1305_TAGLEN / sizeof(uint32_t))
 
@@ -106,6 +107,12 @@ struct lc_hash_impl {
 	size_t	  argsz;
 	size_t	  blocklen;
 	size_t	  hashlen;
+};
+
+struct lc_kdf_impl {
+	int	(*kdf)(uint8_t *, size_t *, void *, size_t);
+
+	size_t	  argsz;
 };
 
 

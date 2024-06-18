@@ -69,6 +69,8 @@ struct lc_cipher_impl;
 struct lc_hash_ctx;
 struct lc_hash_impl;
 
+struct lc_kdf_impl;
+
 /*
  * Parameters.
  */
@@ -109,6 +111,19 @@ struct lc_chacha20_poly1305_params {
 struct lc_xchacha20_poly1305_params {
 	uint8_t	key[LC_XCHACHA20_KEYLEN];
 	uint8_t	nonce[LC_XCHACHA20_NONCELEN];
+};
+
+/* KDF. */
+
+struct lc_hkdf_params {
+	struct lc_hash_ctx	*hash;
+	struct lc_auth_ctx	*hmac;
+	uint8_t			*ikm;
+	size_t			 ikmlen;
+	uint8_t			*info;
+	size_t			 infolen;
+	uint8_t			*salt;
+	size_t			 saltlen;
 };
 
 
@@ -192,6 +207,16 @@ int	lc_aead_open(const struct lc_aead_impl *, uint8_t *, size_t *, void *,
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
 const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
+
+
+/*
+ * Key derivation functions.
+ */
+
+int	lc_kdf(const struct lc_kdf_impl *, uint8_t *, size_t *, void *,
+	    size_t);
+
+const struct lc_kdf_impl	*lc_kdf_impl_hkdf(void);
 
 
 /*
