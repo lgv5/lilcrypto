@@ -413,28 +413,28 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 }
 
 
-static struct lc_aead_impl	chacha20_poly1305_impl = {
-	.seal = &chacha20_poly1305_seal,
-	.open = &chacha20_poly1305_open,
-
-	.blocklen = LC_CHACHA20_BLOCKLEN,
-};
-
-static struct lc_aead_impl	xchacha20_poly1305_impl = {
-	.seal = &xchacha20_poly1305_seal,
-	.open = &xchacha20_poly1305_open,
-
-	.blocklen = LC_XCHACHA20_BLOCKLEN,
-};
-
 const struct lc_aead_impl *
 lc_aead_impl_chacha20_poly1305(void)
 {
+	static struct lc_aead_impl	chacha20_poly1305_impl = {
+		.seal = &chacha20_poly1305_seal,
+		.open = &chacha20_poly1305_open,
+
+		.blocklen = LC_CHACHA20_BLOCKLEN,
+	};
+
 	return &chacha20_poly1305_impl;
 }
 
 const struct lc_aead_impl *
 lc_aead_impl_xchacha20_poly1305(void)
 {
+	static struct lc_aead_impl	xchacha20_poly1305_impl = {
+		.seal = &xchacha20_poly1305_seal,
+		.open = &xchacha20_poly1305_open,
+
+		.blocklen = LC_XCHACHA20_BLOCKLEN,
+	};
+
 	return &xchacha20_poly1305_impl;
 }
