@@ -23,8 +23,6 @@
  * according to draft-irtf-cfrg-xchacha-03.
  */
 
-static const uint8_t	zeropad[16];
-
 static int
 chacha20_xchacha20_keysetup(struct lc_cipher_ctx *cctx,
     uint8_t akey[LC_POLY1305_KEYLEN], void *initparams)
@@ -94,7 +92,7 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 	    !lc_auth_update(actx, aad, aadlen))
 		goto cleanup;
 	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (aadlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
 			goto cleanup;
 
 	cparams.counter = 1;
@@ -111,7 +109,7 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 	if (!lc_auth_update(actx, out, inlen))
 		goto cleanup;
 	if (inlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (inlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (inlen % 16)))
 			goto cleanup;
 
 	store64le(&buf[0], aadlen);
@@ -183,7 +181,7 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 	    !lc_auth_update(actx, aad, aadlen))
 		goto cleanup;
 	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (aadlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
 			goto cleanup;
 
 	cparams.counter = 1;
@@ -200,7 +198,7 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 	if (!lc_auth_update(actx, out, inlen))
 		goto cleanup;
 	if (inlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (inlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (inlen % 16)))
 			goto cleanup;
 
 	store64le(&buf[0], aadlen);
@@ -274,14 +272,14 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 	    !lc_auth_update(actx, aad, aadlen))
 		goto cleanup;
 	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (aadlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
 			goto cleanup;
 
 	ctlen = inlen - LC_POLY1305_TAGLEN;
 	if (!lc_auth_update(actx, in, ctlen))
 		goto cleanup;
 	if (ctlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (ctlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (ctlen % 16)))
 			goto cleanup;
 
 	store64le(&buf[0], aadlen);
@@ -369,14 +367,14 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 	    !lc_auth_update(actx, aad, aadlen))
 		goto cleanup;
 	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (aadlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
 			goto cleanup;
 
 	ctlen = inlen - LC_POLY1305_TAGLEN;
 	if (!lc_auth_update(actx, in, ctlen))
 		goto cleanup;
 	if (ctlen % 16 != 0)
-		if (!lc_auth_update(actx, zeropad, 16 - (ctlen % 16)))
+		if (!lc_auth_update(actx, zerobuf, 16 - (ctlen % 16)))
 			goto cleanup;
 
 	store64le(&buf[0], aadlen);

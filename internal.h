@@ -208,4 +208,12 @@ void	sha256_block(struct sha256_state *);
 
 void	sha512_block(struct sha512_state *);
 
+
+/*
+ * VARIABLES
+ */
+
+extern uint8_t	zerobuf[128];
+
+
 #endif /* LC_INTERNAL_H */

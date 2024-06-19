@@ -23,6 +23,9 @@
 #define HEXDUMP_BUFSZ	128
 
 
+uint8_t	zerobuf[128] = { 0 };
+
+
 static size_t
 hexdump_line(char *buf, const uint8_t *blob, size_t len, size_t off, int pad)
 {

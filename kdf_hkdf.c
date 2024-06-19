@@ -19,9 +19,6 @@
 #include "internal.h"
 
 
-static uint8_t	zeros[HMAC_HASHLEN_MAX];
-
-
 static int
 hkdf_kdf(uint8_t *out, size_t *outlen, void *initparams, size_t len)
 {
@@ -51,7 +48,7 @@ hkdf_kdf(uint8_t *out, size_t *outlen, void *initparams, size_t len)
 
 	hmacparams.hash = params->hash;
 	if (params->saltlen == 0) {
-		hmacparams.key = zeros;
+		hmacparams.key = zerobuf;
 		hmacparams.keylen = hashlen;
 	} else {
 		hmacparams.key = params->salt;
