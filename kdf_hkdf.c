@@ -91,6 +91,8 @@ hkdf_kdf(uint8_t *out, size_t *outlen, void *initparams, size_t len)
 	memcpy(out, tn, len);
 	*outlen += len;
 
+	lc_scrub(prk, sizeof(prk));
+
 	return 1;
 }
 
