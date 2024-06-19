@@ -64,6 +64,7 @@ hmac_update(void *arg, const uint8_t *in, size_t inlen)
 static int
 hmac_final(void *arg, uint8_t *out, size_t *outlen)
 {
+	struct lc_hash_ctx	*hash;
 	struct hmac_state	*state = arg;
 	uint8_t			 m[HMAC_BLOCKLEN_MAX],
 				    okeypad[HMAC_BLOCKLEN_MAX];
@@ -87,7 +88,9 @@ hmac_final(void *arg, uint8_t *out, size_t *outlen)
 	    lc_hash_update(state->hash, m, olen) &&
 	    lc_hash_final(state->hash, out, outlen);
 
+	hash = state->hash;
 	lc_scrub(state, sizeof(*state));
+	state->hash = hash;
 
 	return rc;
 }
