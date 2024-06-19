@@ -24,23 +24,13 @@
  */
 
 static int
-chacha20_xchacha20_keysetup(struct lc_cipher_ctx *cctx,
+poly1305_keysetup(struct lc_cipher_ctx *cctx,
     uint8_t akey[LC_POLY1305_KEYLEN], void *initparams)
 {
-	size_t	i, olen, akeylen;
+	size_t	akeylen;
 
-	for (i = 0; i < LC_POLY1305_KEYLEN; i++)
-		akey[i] = 0;
-	if (!lc_cipher_encrypt_init(cctx, initparams) ||
-	    !lc_cipher_encrypt_update(cctx, akey, &olen, akey,
-	    LC_POLY1305_KEYLEN))
-		return 0;
-	akeylen = olen;
-	if (!lc_cipher_encrypt_final(cctx, akey + olen, &olen))
-		return 0;
-	akeylen += olen;
-
-	return akeylen == LC_POLY1305_KEYLEN;
+	return lc_cipher_encrypt(cctx->impl, akey, &akeylen, initparams,
+	    zerobuf, LC_POLY1305_KEYLEN) && akeylen == LC_POLY1305_KEYLEN;
 }
 
 static int
@@ -85,7 +75,7 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
+	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -96,14 +86,7 @@ chacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 			goto cleanup;
 
 	cparams.counter = 1;
-	if (!lc_cipher_encrypt_init(cctx, &cparams) ||
-	    !lc_cipher_encrypt_update(cctx, out, &olen, in, inlen))
-		goto cleanup;
-	*outlen = olen;
-	if (!lc_cipher_encrypt_final(cctx, out + olen, &olen))
-		goto cleanup;
-	*outlen += olen;
-	if (*outlen != inlen)
+	if (!lc_cipher_encrypt(cctx->impl, out, outlen, &cparams, in, inlen))
 		goto cleanup;
 
 	if (!lc_auth_update(actx, out, inlen))
@@ -174,7 +157,7 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
+	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -185,14 +168,7 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 			goto cleanup;
 
 	cparams.counter = 1;
-	if (!lc_cipher_encrypt_init(cctx, &cparams) ||
-	    !lc_cipher_encrypt_update(cctx, out, &olen, in, inlen))
-		goto cleanup;
-	*outlen = olen;
-	if (!lc_cipher_encrypt_final(cctx, out + olen, &olen))
-		goto cleanup;
-	*outlen += olen;
-	if (*outlen != inlen)
+	if (!lc_cipher_encrypt(cctx->impl, out, outlen, &cparams, in, inlen))
 		goto cleanup;
 
 	if (!lc_auth_update(actx, out, inlen))
@@ -265,7 +241,7 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
+	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -293,14 +269,7 @@ chacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 		goto cleanup;
 
 	cparams.counter = 1;
-	if (!lc_cipher_decrypt_init(cctx, &cparams) ||
-	    !lc_cipher_decrypt_update(cctx, out, &olen, in, ctlen))
-		goto cleanup;
-	*outlen = olen;
-	if (!lc_cipher_decrypt_final(cctx, out + olen, &olen))
-		goto cleanup;
-	*outlen += olen;
-	if (*outlen != ctlen)
+	if (!lc_cipher_decrypt(cctx->impl, out, outlen, &cparams, in, ctlen))
 		goto cleanup;
 
 	ret = 1;
@@ -360,7 +329,7 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 		cparams.nonce[i] = params->nonce[i];
 
 	cparams.counter = 0;
-	if (!chacha20_xchacha20_keysetup(cctx, aparams.key, &cparams))
+	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
 		goto cleanup;
 
 	if (!lc_auth_init(actx, &aparams) ||
@@ -388,15 +357,9 @@ xchacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
 		goto cleanup;
 
 	cparams.counter = 1;
-	if (!lc_cipher_decrypt_init(cctx, &cparams) ||
-	    !lc_cipher_decrypt_update(cctx, out, &olen, in, ctlen))
+	if (!lc_cipher_decrypt(cctx->impl, out, outlen, &cparams, in, ctlen))
 		goto cleanup;
-	*outlen = olen;
-	if (!lc_cipher_decrypt_final(cctx, out + olen, &olen))
-		goto cleanup;
-	*outlen += olen;
-	if (*outlen != ctlen)
-		goto cleanup;
+
 	ret = 1;
 
  cleanup:
