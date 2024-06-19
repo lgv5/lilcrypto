@@ -54,8 +54,8 @@
 
 
 /*
- * *_impl provides the function pointers to the actual implementation of methods,
- * serving as an interface to the cryptographic algorithms.
+ * *_impl provides the function pointers to the actual implementation of
+ * methods, serving as an interface to the cryptographic algorithms.
  */
 
 struct lc_aead_impl {
@@ -117,8 +117,8 @@ struct lc_kdf_impl {
 
 
 /*
- * *_ctx binds an *_impl with an state, effectively representing an instance of a
- * cryptographic algorithm.
+ * *_ctx binds an *_impl with an state, effectively representing an instance of
+ * a cryptographic algorithm.
  */
 
 struct lc_auth_ctx {
@@ -193,7 +193,8 @@ struct sha512_state {
 /* Authentitcation. */
 
 void	poly1305_block(struct poly1305_state *, uint32_t);
-void	poly1305_reduce(struct poly1305_state *, uint32_t [POLY1305_TAGLEN_WORDS]);
+void	poly1305_reduce(struct poly1305_state *,
+	    uint32_t [POLY1305_TAGLEN_WORDS]);
 
 
 /* Ciphers. */
