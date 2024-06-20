@@ -59,10 +59,21 @@
  */
 
 struct lc_aead_impl {
-	int	(*seal)(uint8_t *, size_t *, void *, const uint8_t *, size_t,
-		    const uint8_t *, size_t);
+	int	(*seal_init)(void *, void *);
+	int	(*seal_update)(void *, uint8_t *, size_t *, const uint8_t *,
+		    size_t, const uint8_t *, size_t);
+	int	(*seal_final)(void *, uint8_t *, size_t *, uint8_t *,
+		    size_t *);
+	int	(*seal)(uint8_t *, size_t *, uint8_t *, size_t *, void *,
+		    const uint8_t *, size_t, const uint8_t *, size_t);
+
+	int	(*open_init)(void *, void *);
+	int	(*open_update)(void *, uint8_t *, size_t *, const uint8_t *,
+		    size_t, const uint8_t *, size_t);
+	int	(*open_final)(void *, uint8_t *, size_t *, const uint8_t *,
+		    size_t);
 	int	(*open)(uint8_t *, size_t *, void *, const uint8_t *, size_t,
-		    const uint8_t *, size_t);
+		    const uint8_t *, size_t, const uint8_t *, size_t);
 
 	size_t	  argsz;
 	size_t	  blocklen;
@@ -121,6 +132,11 @@ struct lc_kdf_impl {
  * a cryptographic algorithm.
  */
 
+struct lc_aead_ctx {
+	const struct lc_aead_impl	*impl;
+	void				*arg;
+};
+
 struct lc_auth_ctx {
 	const struct lc_auth_impl	*impl;
 	void				*arg;
@@ -139,6 +155,16 @@ struct lc_hash_ctx {
 /*
  * *_state holds the internal state of the cryptographic algorithms.
  */
+
+/* AEAD. */
+
+struct chacha20_poly1305_state {
+	struct lc_auth_ctx	*auth;
+	struct lc_cipher_ctx	*cipher;
+	uint64_t		 aadlen;
+	uint64_t		 ctlen;
+	int			 aaddone;
+};
 
 /* Authentication. */
 

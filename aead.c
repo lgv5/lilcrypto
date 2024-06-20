@@ -14,21 +14,96 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
+
 #include "internal.h"
 
 
 int
-lc_aead_seal(const struct lc_aead_impl *impl, uint8_t *out, size_t *outlen,
-    void *initparams, const uint8_t *aad, size_t aadlen, const uint8_t *in,
-    size_t inlen)
+lc_aead_seal_init(struct lc_aead_ctx *ctx, void *initparams)
 {
-	return impl->seal(out, outlen, initparams, aad, aadlen, in, inlen);
+	return ctx->impl->seal_init(ctx->arg, initparams);
+}
+
+int
+lc_aead_seal_update(struct lc_aead_ctx *ctx, uint8_t *out, size_t *outlen,
+    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+{
+	return ctx->impl->seal_update(ctx->arg, out, outlen, aad, aadlen, in,
+	    inlen);
+}
+
+int
+lc_aead_seal_final(struct lc_aead_ctx *ctx, uint8_t *out, size_t *outlen,
+    uint8_t *tag, size_t *taglen)
+{
+	return ctx->impl->seal_final(ctx->arg, out, outlen, tag, taglen);
+}
+
+int
+lc_aead_seal(const struct lc_aead_impl *impl, uint8_t *out, size_t *outlen,
+    uint8_t *tag, size_t *taglen, void *initparams, const uint8_t *aad,
+    size_t aadlen, const uint8_t *in, size_t inlen)
+{
+	return impl->seal(out, outlen, tag, taglen, initparams, aad, aadlen,
+	    in, inlen);
+}
+
+int
+lc_aead_open_init(struct lc_aead_ctx *ctx, void *initparams)
+{
+	return ctx->impl->open_init(ctx->arg, initparams);
+}
+
+int
+lc_aead_open_update(struct lc_aead_ctx *ctx, uint8_t *out, size_t *outlen,
+    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+{
+	return ctx->impl->open_update(ctx->arg, out, outlen, aad, aadlen, in,
+	    inlen);
+}
+
+int
+lc_aead_open_final(struct lc_aead_ctx *ctx, uint8_t *out, size_t *outlen,
+    const uint8_t *tag, size_t taglen)
+{
+	return ctx->impl->open_final(ctx->arg, out, outlen, tag, taglen);
 }
 
 int
 lc_aead_open(const struct lc_aead_impl *impl, uint8_t *out, size_t *outlen,
-    void *initparams, const uint8_t *aad, size_t aadlen, const uint8_t *in,
-    size_t inlen)
+    void *initparams, const uint8_t *tag, size_t taglen, const uint8_t *aad,
+    size_t aadlen, const uint8_t *in, size_t inlen)
 {
-	return impl->open(out, outlen, initparams, aad, aadlen, in, inlen);
+	return impl->open(out, outlen, initparams, tag, taglen, aad, aadlen,
+	    in, inlen);
+}
+
+struct lc_aead_ctx *
+lc_aead_ctx_new(const struct lc_aead_impl *impl)
+{
+	struct lc_aead_ctx	*ctx;
+
+	ctx = malloc(sizeof(*ctx));
+	if (ctx == NULL)
+		return NULL;
+	if (impl->argsz > 0) {
+		ctx->arg = malloc(impl->argsz);
+		if (ctx->arg == NULL) {
+			free(ctx);
+			return NULL;
+		}
+	} else
+		ctx->arg = NULL;
+	ctx->impl = impl;
+
+	return ctx;
+}
+
+void
+lc_aead_ctx_free(struct lc_aead_ctx *ctx)
+{
+	if (ctx != NULL)
+		free(ctx->arg);
+	free(ctx);
 }

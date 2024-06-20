@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <limits.h>
+#include <string.h>
+
 #include "internal.h"
 #include "util.h"
 
@@ -23,115 +26,260 @@
  * according to draft-irtf-cfrg-xchacha-03.
  */
 
-static int
-poly1305_keysetup(struct lc_cipher_ctx *cctx,
-    uint8_t akey[LC_POLY1305_KEYLEN], void *initparams)
-{
-	size_t	akeylen;
+enum aead_mode {
+	AEAD_SEAL,
+	AEAD_OPEN,
+};
 
-	return lc_cipher_encrypt(cctx->impl, akey, &akeylen, initparams,
-	    zerobuf, LC_POLY1305_KEYLEN) && akeylen == LC_POLY1305_KEYLEN;
-}
 
 static int
-chacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
-    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+chacha20_poly1305_anycrypt_init(void *arg, void *initparams, enum aead_mode m)
 {
 	struct lc_chacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx			*cctx = NULL;
-	struct lc_auth_ctx			*actx = NULL;
+	struct chacha20_poly1305_state		*state = arg;
 	struct lc_chacha20_params		 cparams;
 	struct lc_poly1305_params		 aparams;
-	uint8_t					 buf[sizeof(uint64_t) * 2];
-	size_t					 i, olen;
-	int					 ret = 0;
+	size_t					 olen;
 
-	*outlen = 0;
-	/* inlen and aadlen are capped by design; enough space of tag. */
-	if (inlen > UINT64_MAX || aadlen > UINT64_MAX ||
-	    inlen > SIZE_MAX - LC_POLY1305_TAGLEN)
-		return 0;
-	/* Counter 0 is used for deriving Poly1305 key. */
-	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
-	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
-	    CHACHA20_CTRMAX - 1)
+	if (params->cipher->impl != lc_cipher_impl_chacha20() ||
+	    params->auth->impl != lc_auth_impl_poly1305())
 		return 0;
 
-	if (out == NULL) {
-		*outlen = inlen + LC_POLY1305_TAGLEN;
-		return 1;
-	}
+	state->auth = params->auth;
+	state->cipher = params->cipher;
+	state->aadlen = state->ctlen = 0;
+	state->aaddone = 0;
 
-	cctx = lc_cipher_ctx_new(lc_cipher_impl_chacha20());
-	if (cctx == NULL)
-		goto cleanup;
-	actx = lc_auth_ctx_new(lc_auth_impl_poly1305());
-	if (actx == NULL)
-		goto cleanup;
-
-	for (i = 0; i < sizeof(params->key); i++)
-		cparams.key[i] = params->key[i];
-	for (i = 0; i < sizeof(params->nonce); i++)
-		cparams.nonce[i] = params->nonce[i];
+	memcpy(cparams.key, params->key, sizeof(params->key));
+	memcpy(cparams.nonce, params->nonce, sizeof(params->nonce));
 
 	cparams.counter = 0;
-	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
-		goto cleanup;
+	if (!lc_cipher_encrypt(state->cipher->impl, aparams.key, &olen,
+	    &cparams, zerobuf, LC_POLY1305_KEYLEN))
+		return 0;
 
-	if (!lc_auth_init(actx, &aparams) ||
-	    !lc_auth_update(actx, aad, aadlen))
-		goto cleanup;
-	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
-			goto cleanup;
-
+	if (!lc_auth_init(state->auth, &aparams))
+		return 0;
 	cparams.counter = 1;
-	if (!lc_cipher_encrypt(cctx->impl, out, outlen, &cparams, in, inlen))
-		goto cleanup;
 
-	if (!lc_auth_update(actx, out, inlen))
-		goto cleanup;
-	if (inlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (inlen % 16)))
-			goto cleanup;
+	switch (m) {
+	case AEAD_SEAL:
+		if (!lc_cipher_encrypt_init(state->cipher, &cparams))
+			return 0;
+		break;
+	case AEAD_OPEN:
+		if (!lc_cipher_decrypt_init(state->cipher, &cparams))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
 
-	store64le(&buf[0], aadlen);
-	store64le(&buf[sizeof(uint64_t)], inlen);
-	if (!lc_auth_update(actx, buf, sizeof(buf)) ||
-	    !lc_auth_final(actx, out + inlen, &olen))
-		goto cleanup;
-	*outlen += olen;
-	if (*outlen != inlen + LC_POLY1305_TAGLEN)
-		goto cleanup;
-	ret = 1;
-
- cleanup:
-	lc_scrub(buf, sizeof(buf));
-	lc_scrub(&aparams, sizeof(aparams));
-	lc_scrub(&cparams, sizeof(cparams));
-	lc_auth_ctx_free(actx);
-	lc_cipher_ctx_free(cctx);
-
-	return ret;
+	return 1;
 }
 
 static int
-xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
-    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+xchacha20_poly1305_anycrypt_init(void *arg, void *initparams, enum aead_mode m)
 {
 	struct lc_xchacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx			*cctx = NULL;
-	struct lc_auth_ctx			*actx = NULL;
+	struct chacha20_poly1305_state		*state = arg;
 	struct lc_xchacha20_params		 cparams;
 	struct lc_poly1305_params		 aparams;
-	uint8_t					 buf[sizeof(uint64_t) * 2];
-	size_t					 i, olen;
-	int					 ret = 0;
+	size_t					 olen;
+
+	if (params->cipher->impl != lc_cipher_impl_xchacha20() ||
+	    params->auth->impl != lc_auth_impl_poly1305())
+		return 0;
+
+	state->auth = params->auth;
+	state->cipher = params->cipher;
+	state->aadlen = state->ctlen = 0;
+	state->aaddone = 0;
+
+	memcpy(cparams.key, params->key, sizeof(params->key));
+	memcpy(cparams.nonce, params->nonce, sizeof(params->nonce));
+
+	cparams.counter = 0;
+	if (!lc_cipher_encrypt(state->cipher->impl, aparams.key, &olen,
+	    &cparams, zerobuf, LC_POLY1305_KEYLEN))
+		return 0;
+
+	if (!lc_auth_init(state->auth, &aparams))
+		return 0;
+	cparams.counter = 1;
+
+	switch (m) {
+	case AEAD_SEAL:
+		if (!lc_cipher_encrypt_init(state->cipher, &cparams))
+			return 0;
+		break;
+	case AEAD_OPEN:
+		if (!lc_cipher_decrypt_init(state->cipher, &cparams))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+c20_xc20_poly1305_anycrypt_update(void *arg, uint8_t *out, size_t *outlen,
+    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen,
+    enum aead_mode m)
+{
+	struct chacha20_poly1305_state	*state = arg;
+	size_t				 ctlen;
 
 	*outlen = 0;
-	/* inlen and aadlen are capped by design; enough space of tag. */
-	if (inlen > UINT64_MAX || aadlen > UINT64_MAX ||
-	    inlen > SIZE_MAX - LC_POLY1305_TAGLEN)
+	switch (m) {
+	case AEAD_SEAL:
+		if (!lc_cipher_encrypt_update(state->cipher, NULL, &ctlen, in,
+		    inlen))
+			return 0;
+		break;
+	case AEAD_OPEN:
+		if (!lc_cipher_decrypt_update(state->cipher, NULL, &ctlen, in,
+		    inlen))
+			return 0;
+		break;
+	default:
+		if (!lc_cipher_decrypt_update(state->cipher, NULL, &ctlen, in,
+		    inlen))
+			return 0;
+		return 0;
+	}
+
+	if (aadlen > UINT64_MAX - state->aadlen ||
+	    ctlen > UINT64_MAX - state->ctlen)
+		return 0;
+	if (aadlen > 0 && state->aaddone)
+		return 0;
+
+	if (out == NULL) {
+		*outlen = ctlen;
+		return 1;
+	}
+
+	if (aadlen > 0) {
+		if (!lc_auth_update(state->auth, aad, aadlen))
+			return 0;
+		state->aadlen += aadlen;
+	}
+
+	if (inlen > 0) {
+		if (!state->aaddone) {
+			if (state->aadlen % 16 != 0 &&
+			    !lc_auth_update(state->auth, zerobuf,
+			    16 - (state->aadlen % 16)))
+					return 0;
+			state->aaddone = 1;
+		}
+
+		switch (m) {
+		case AEAD_SEAL:
+			if (!lc_cipher_encrypt_update(state->cipher, out,
+			    outlen, in, inlen))
+				return 0;
+			if (!lc_auth_update(state->auth, out, *outlen))
+				return 0;
+			state->ctlen += *outlen;
+			break;
+		case AEAD_OPEN:
+			if (!lc_auth_update(state->auth, in, inlen))
+				return 0;
+			if (!lc_cipher_decrypt_update(state->cipher, out,
+			    outlen, in, inlen))
+				return 0;
+			state->ctlen += inlen;
+			break;
+		default:
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int
+chacha20_poly1305_seal_init(void *arg, void *initparams)
+{
+	return chacha20_poly1305_anycrypt_init(arg, initparams, AEAD_SEAL);
+}
+
+static int
+xchacha20_poly1305_seal_init(void *arg, void *initparams)
+{
+	return xchacha20_poly1305_anycrypt_init(arg, initparams, AEAD_SEAL);
+}
+
+static int
+c20_xc20_poly1305_seal_update(void *arg, uint8_t *out, size_t *outlen,
+    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+{
+	return c20_xc20_poly1305_anycrypt_update(arg, out, outlen, aad, aadlen,
+	    in, inlen, AEAD_SEAL);
+}
+
+static int
+c20_xc20_poly1305_seal_final(void *arg, uint8_t *out, size_t *outlen,
+    uint8_t *tag, size_t *taglen)
+{
+	struct chacha20_poly1305_state	*state = arg;
+	uint8_t				 buf[sizeof(uint64_t) * 2];
+	size_t				 ctlen;
+
+	*outlen = *taglen = 0;
+	if (!lc_cipher_encrypt_final(state->cipher, NULL, &ctlen))
+		return 0;
+	if (ctlen > UINT64_MAX - state->ctlen)
+		return 0;
+
+	if (out == NULL || tag == NULL) {
+		*outlen = ctlen;
+		*taglen = LC_POLY1305_TAGLEN;
+		return 1;
+	}
+
+	if (!state->aaddone) {
+		if (state->aadlen % 16 != 0 &&
+		    !lc_auth_update(state->auth, zerobuf,
+		    16 - (state->aadlen % 16)))
+				return 0;
+		state->aaddone = 1;
+	}
+
+	if (!lc_cipher_encrypt_final(state->cipher, out, outlen))
+		return 0;
+
+	if (!lc_auth_update(state->auth, out, *outlen))
+		return 0;
+	state->ctlen += *outlen;
+	if (state->ctlen % 16 != 0 &&
+	    !lc_auth_update(state->auth, zerobuf, 16 - (state->ctlen % 16)))
+		return 0;
+
+	store64le(&buf[0], state->aadlen);
+	store64le(&buf[sizeof(uint64_t)], state->ctlen);
+	if (!lc_auth_update(state->auth, buf, sizeof(buf)) ||
+	    !lc_auth_final(state->auth, tag, taglen))
+		return 0;
+
+	return 1;
+}
+
+static int
+chacha20_poly1305_seal(uint8_t *out, size_t *outlen, uint8_t *tag,
+    size_t *taglen, void *initparams, const uint8_t *aad, size_t aadlen,
+    const uint8_t *in, size_t inlen)
+{
+	struct chacha20_poly1305_state	state;
+	size_t				olen;
+
+	*outlen = *taglen = 0;
+	/* inlen and aadlen are capped by design. */
+	if (inlen > UINT64_MAX || aadlen > UINT64_MAX)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
 	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
@@ -139,238 +287,200 @@ xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, void *initparams,
 	    CHACHA20_CTRMAX - 1)
 		return 0;
 
-	if (out == NULL) {
-		*outlen = inlen + LC_POLY1305_TAGLEN;
+	if (out == NULL || tag == NULL) {
+		*outlen = inlen;
+		*taglen = LC_POLY1305_TAGLEN;
 		return 1;
 	}
 
-	cctx = lc_cipher_ctx_new(lc_cipher_impl_xchacha20());
-	if (cctx == NULL)
-		goto cleanup;
-	actx = lc_auth_ctx_new(lc_auth_impl_poly1305());
-	if (actx == NULL)
-		goto cleanup;
-
-	for (i = 0; i < sizeof(params->key); i++)
-		cparams.key[i] = params->key[i];
-	for (i = 0; i < sizeof(params->nonce); i++)
-		cparams.nonce[i] = params->nonce[i];
-
-	cparams.counter = 0;
-	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
-		goto cleanup;
-
-	if (!lc_auth_init(actx, &aparams) ||
-	    !lc_auth_update(actx, aad, aadlen))
-		goto cleanup;
-	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
-			goto cleanup;
-
-	cparams.counter = 1;
-	if (!lc_cipher_encrypt(cctx->impl, out, outlen, &cparams, in, inlen))
-		goto cleanup;
-
-	if (!lc_auth_update(actx, out, inlen))
-		goto cleanup;
-	if (inlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (inlen % 16)))
-			goto cleanup;
-
-	store64le(&buf[0], aadlen);
-	store64le(&buf[sizeof(uint64_t)], inlen);
-	if (!lc_auth_update(actx, buf, sizeof(buf)) ||
-	    !lc_auth_final(actx, out + inlen, &olen))
-		goto cleanup;
+	if (!chacha20_poly1305_anycrypt_init(&state, initparams, AEAD_SEAL))
+		return 0;
+	if (!c20_xc20_poly1305_anycrypt_update(&state, out, &olen, aad, aadlen,
+	    in, inlen, AEAD_SEAL))
+		return 0;
+	*outlen = olen;
+	if (!c20_xc20_poly1305_seal_final(&state, out + olen, &olen, tag,
+	    taglen))
+		return 0;
 	*outlen += olen;
-	if (*outlen != inlen + LC_POLY1305_TAGLEN)
-		goto cleanup;
-	ret = 1;
 
- cleanup:
-	lc_scrub(buf, sizeof(buf));
-	lc_scrub(&aparams, sizeof(aparams));
-	lc_scrub(&cparams, sizeof(cparams));
-	lc_auth_ctx_free(actx);
-	lc_cipher_ctx_free(cctx);
+	return 1;
+}
 
-	return ret;
+static int
+xchacha20_poly1305_seal(uint8_t *out, size_t *outlen, uint8_t *tag,
+    size_t *taglen, void *initparams, const uint8_t *aad, size_t aadlen,
+    const uint8_t *in, size_t inlen)
+{
+	struct chacha20_poly1305_state	state;
+	size_t				olen;
+
+	*outlen = *taglen = 0;
+	/* inlen and aadlen are capped by design. */
+	if (inlen > UINT64_MAX || aadlen > UINT64_MAX)
+		return 0;
+	/* Counter 0 is used for deriving Poly1305 key. */
+	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
+	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
+	    CHACHA20_CTRMAX - 1)
+		return 0;
+
+	if (out == NULL || tag == NULL) {
+		*outlen = inlen;
+		*taglen = LC_POLY1305_TAGLEN;
+		return 1;
+	}
+
+	if (!xchacha20_poly1305_anycrypt_init(&state, initparams, AEAD_SEAL))
+		return 0;
+	if (!c20_xc20_poly1305_anycrypt_update(&state, out, &olen, aad, aadlen,
+	    in, inlen, AEAD_SEAL))
+		return 0;
+	*outlen = olen;
+	if (!c20_xc20_poly1305_seal_final(&state, out + olen, &olen, tag,
+	    taglen))
+		return 0;
+	*outlen += olen;
+
+	return 1;
+}
+
+static int
+chacha20_poly1305_open_init(void *arg, void *initparams)
+{
+	return chacha20_poly1305_anycrypt_init(arg, initparams, AEAD_OPEN);
+}
+
+static int
+xchacha20_poly1305_open_init(void *arg, void *initparams)
+{
+	return xchacha20_poly1305_anycrypt_init(arg, initparams, AEAD_OPEN);
+}
+
+static int
+c20_xc20_poly1305_open_update(void *arg, uint8_t *out, size_t *outlen,
+    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+{
+	return c20_xc20_poly1305_anycrypt_update(arg, out, outlen, aad, aadlen,
+	    in, inlen, AEAD_OPEN);
+}
+
+static int
+c20_xc20_poly1305_open_final(void *arg, uint8_t *out, size_t *outlen,
+    const uint8_t *tag, size_t taglen)
+{
+	struct chacha20_poly1305_state	*state = arg;
+	uint8_t				 buf[sizeof(uint64_t) * 2],
+					    ctag[LC_POLY1305_TAGLEN];
+	size_t				 ctlen, ctaglen;
+
+	*outlen = 0;
+	if (!lc_cipher_decrypt_final(state->cipher, NULL, &ctlen))
+		return 0;
+	if (ctlen > UINT64_MAX - state->ctlen ||
+	    taglen != LC_POLY1305_TAGLEN)
+		return 0;
+
+	if (out == NULL) {
+		*outlen = ctlen;
+		return 1;
+	}
+
+	if (!state->aaddone) {
+		if (state->aadlen % 16 != 0 &&
+		    !lc_auth_update(state->auth, zerobuf,
+		    16 - (state->aadlen % 16)))
+				return 0;
+		state->aaddone = 1;
+	}
+
+	if (state->ctlen % 16 != 0 &&
+	    !lc_auth_update(state->auth, zerobuf, 16 - (state->ctlen % 16)))
+		return 0;
+
+	store64le(&buf[0], state->aadlen);
+	store64le(&buf[sizeof(uint64_t)], state->ctlen);
+	if (!lc_auth_update(state->auth, buf, sizeof(buf)) ||
+	    !lc_auth_final(state->auth, ctag, &ctaglen))
+		return 0;
+	if (!lc_ct_cmp(ctag, tag, LC_POLY1305_TAGLEN))
+		return 0;
+
+	return lc_cipher_decrypt_final(state->cipher, out, outlen);
 }
 
 static int
 chacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
-    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+    const uint8_t *tag, size_t taglen, const uint8_t *aad, size_t aadlen,
+    const uint8_t *in, size_t inlen)
 {
-	struct lc_chacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx			*cctx = NULL;
-	struct lc_auth_ctx			*actx = NULL;
-	struct lc_chacha20_params		 cparams;
-	struct lc_poly1305_params		 aparams;
-	uint8_t					 tag[LC_POLY1305_TAGLEN];
-	uint8_t					 buf[sizeof(uint64_t) * 2];
-	size_t					 i, olen, ctlen;
-	int					 ret = 0;
+	struct chacha20_poly1305_state	state;
+	size_t				olen;
 
 	*outlen = 0;
-	/* inlen includes the tag; inlen and aadlen are capped by design. */
-	if (inlen < LC_POLY1305_TAGLEN ||
-	    inlen > UINT64_MAX || aadlen > UINT64_MAX)
+	/* inlen and aadlen are capped by design. */
+	if (inlen > UINT64_MAX || aadlen > UINT64_MAX)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
 	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
 	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
-	    CHACHA20_CTRMAX - 1) {
+	    CHACHA20_CTRMAX - 1)
 		return 0;
-	}
 
 	if (out == NULL) {
-		*outlen = inlen - LC_POLY1305_TAGLEN;
+		*outlen = inlen;
 		return 1;
 	}
 
-	cctx = lc_cipher_ctx_new(lc_cipher_impl_chacha20());
-	if (cctx == NULL)
-		goto cleanup;
-	actx = lc_auth_ctx_new(lc_auth_impl_poly1305());
-	if (actx == NULL)
-		goto cleanup;
+	if (!chacha20_poly1305_anycrypt_init(&state, initparams, AEAD_OPEN))
+		return 0;
+	if (!c20_xc20_poly1305_anycrypt_update(&state, out, &olen, aad, aadlen,
+	    in, inlen, AEAD_OPEN))
+		return 0;
+	*outlen = olen;
+	if (!c20_xc20_poly1305_open_final(&state, out + olen, &olen, tag,
+	    taglen))
+		return 0;
+	*outlen += olen;
 
-	for (i = 0; i < sizeof(params->key); i++)
-		cparams.key[i] = params->key[i];
-	for (i = 0; i < sizeof(params->nonce); i++)
-		cparams.nonce[i] = params->nonce[i];
-
-	cparams.counter = 0;
-	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
-		goto cleanup;
-
-	if (!lc_auth_init(actx, &aparams) ||
-	    !lc_auth_update(actx, aad, aadlen))
-		goto cleanup;
-	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
-			goto cleanup;
-
-	ctlen = inlen - LC_POLY1305_TAGLEN;
-	if (!lc_auth_update(actx, in, ctlen))
-		goto cleanup;
-	if (ctlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (ctlen % 16)))
-			goto cleanup;
-
-	store64le(&buf[0], aadlen);
-	store64le(&buf[sizeof(uint64_t)], ctlen);
-	if (!lc_auth_update(actx, buf, sizeof(buf)) ||
-	    !lc_auth_final(actx, tag, &olen))
-		goto cleanup;
-	if (olen != LC_POLY1305_TAGLEN)
-		goto cleanup;
-	if (!lc_ct_cmp(tag, in + ctlen, LC_POLY1305_TAGLEN))
-		goto cleanup;
-
-	cparams.counter = 1;
-	if (!lc_cipher_decrypt(cctx->impl, out, outlen, &cparams, in, ctlen))
-		goto cleanup;
-
-	ret = 1;
-
- cleanup:
-	lc_scrub(buf, sizeof(buf));
-	lc_scrub(&aparams, sizeof(aparams));
-	lc_scrub(&cparams, sizeof(cparams));
-	lc_scrub(tag, sizeof(tag));
-	lc_auth_ctx_free(actx);
-	lc_cipher_ctx_free(cctx);
-
-	return ret;
+	return 1;
 }
 
 static int
 xchacha20_poly1305_open(uint8_t *out, size_t *outlen, void *initparams,
-    const uint8_t *aad, size_t aadlen, const uint8_t *in, size_t inlen)
+    const uint8_t *tag, size_t taglen, const uint8_t *aad, size_t aadlen,
+    const uint8_t *in, size_t inlen)
 {
-	struct lc_xchacha20_poly1305_params	*params = initparams;
-	struct lc_cipher_ctx			*cctx = NULL;
-	struct lc_auth_ctx			*actx = NULL;
-	struct lc_xchacha20_params		 cparams;
-	struct lc_poly1305_params		 aparams;
-	uint8_t					 tag[LC_POLY1305_TAGLEN];
-	uint8_t					 buf[sizeof(uint64_t) * 2];
-	size_t					 i, olen, ctlen;
-	int					 ret = 0;
+	struct chacha20_poly1305_state	state;
+	size_t				olen;
 
 	*outlen = 0;
-	/* inlen includes the tag; inlen and aadlen are capped by design. */
-	if (inlen < LC_POLY1305_TAGLEN ||
-	    inlen > UINT64_MAX || aadlen > UINT64_MAX)
+	/* inlen and aadlen are capped by design. */
+	if (inlen > UINT64_MAX || aadlen > UINT64_MAX)
 		return 0;
 	/* Counter 0 is used for deriving Poly1305 key. */
 	if (inlen > SIZE_MAX - (LC_CHACHA20_BLOCKLEN - 1) ||
 	    (inlen + LC_CHACHA20_BLOCKLEN - 1) / LC_CHACHA20_BLOCKLEN >
-	    CHACHA20_CTRMAX - 1) {
+	    CHACHA20_CTRMAX - 1)
 		return 0;
-	}
 
 	if (out == NULL) {
-		*outlen = inlen - LC_POLY1305_TAGLEN;
+		*outlen = inlen;
 		return 1;
 	}
 
-	cctx = lc_cipher_ctx_new(lc_cipher_impl_xchacha20());
-	if (cctx == NULL)
-		goto cleanup;
-	actx = lc_auth_ctx_new(lc_auth_impl_poly1305());
-	if (actx == NULL)
-		goto cleanup;
+	if (!xchacha20_poly1305_anycrypt_init(&state, initparams, AEAD_OPEN))
+		return 0;
+	if (!c20_xc20_poly1305_anycrypt_update(&state, out, &olen, aad, aadlen,
+	    in, inlen, AEAD_OPEN))
+		return 0;
+	*outlen = olen;
+	if (!c20_xc20_poly1305_open_final(&state, out + olen, &olen, tag,
+	    taglen))
+		return 0;
+	*outlen += olen;
 
-	for (i = 0; i < sizeof(params->key); i++)
-		cparams.key[i] = params->key[i];
-	for (i = 0; i < sizeof(params->nonce); i++)
-		cparams.nonce[i] = params->nonce[i];
-
-	cparams.counter = 0;
-	if (!poly1305_keysetup(cctx, aparams.key, &cparams))
-		goto cleanup;
-
-	if (!lc_auth_init(actx, &aparams) ||
-	    !lc_auth_update(actx, aad, aadlen))
-		goto cleanup;
-	if (aadlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (aadlen % 16)))
-			goto cleanup;
-
-	ctlen = inlen - LC_POLY1305_TAGLEN;
-	if (!lc_auth_update(actx, in, ctlen))
-		goto cleanup;
-	if (ctlen % 16 != 0)
-		if (!lc_auth_update(actx, zerobuf, 16 - (ctlen % 16)))
-			goto cleanup;
-
-	store64le(&buf[0], aadlen);
-	store64le(&buf[sizeof(uint64_t)], ctlen);
-	if (!lc_auth_update(actx, buf, sizeof(buf)) ||
-	    !lc_auth_final(actx, tag, &olen))
-		goto cleanup;
-	if (olen != LC_POLY1305_TAGLEN)
-		goto cleanup;
-	if (!lc_ct_cmp(tag, in + ctlen, LC_POLY1305_TAGLEN))
-		goto cleanup;
-
-	cparams.counter = 1;
-	if (!lc_cipher_decrypt(cctx->impl, out, outlen, &cparams, in, ctlen))
-		goto cleanup;
-
-	ret = 1;
-
- cleanup:
-	lc_scrub(buf, sizeof(buf));
-	lc_scrub(&aparams, sizeof(aparams));
-	lc_scrub(&cparams, sizeof(cparams));
-	lc_scrub(tag, sizeof(tag));
-	lc_auth_ctx_free(actx);
-	lc_cipher_ctx_free(cctx);
-
-	return ret;
+	return 1;
 }
 
 
@@ -378,9 +488,17 @@ const struct lc_aead_impl *
 lc_aead_impl_chacha20_poly1305(void)
 {
 	static struct lc_aead_impl	chacha20_poly1305_impl = {
+		.seal_init = &chacha20_poly1305_seal_init,
+		.seal_update = &c20_xc20_poly1305_seal_update,
+		.seal_final = &c20_xc20_poly1305_seal_final,
 		.seal = &chacha20_poly1305_seal,
+
+		.open_init = &chacha20_poly1305_open_init,
+		.open_update = &c20_xc20_poly1305_open_update,
+		.open_final = &c20_xc20_poly1305_open_final,
 		.open = &chacha20_poly1305_open,
 
+		.argsz = sizeof(struct chacha20_poly1305_state),
 		.blocklen = LC_CHACHA20_BLOCKLEN,
 	};
 
@@ -391,10 +509,18 @@ const struct lc_aead_impl *
 lc_aead_impl_xchacha20_poly1305(void)
 {
 	static struct lc_aead_impl	xchacha20_poly1305_impl = {
+		.seal_init = &xchacha20_poly1305_seal_init,
+		.seal_update = &c20_xc20_poly1305_seal_update,
+		.seal_final = &c20_xc20_poly1305_seal_final,
 		.seal = &xchacha20_poly1305_seal,
+
+		.open_init = &xchacha20_poly1305_open_init,
+		.open_update = &c20_xc20_poly1305_open_update,
+		.open_final = &c20_xc20_poly1305_open_final,
 		.open = &xchacha20_poly1305_open,
 
-		.blocklen = LC_XCHACHA20_BLOCKLEN,
+		.argsz = sizeof(struct chacha20_poly1305_state),
+		.blocklen = LC_CHACHA20_BLOCKLEN,
 	};
 
 	return &xchacha20_poly1305_impl;

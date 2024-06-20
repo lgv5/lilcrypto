@@ -58,6 +58,7 @@
  * Structs.
  */
 
+struct lc_aead_ctx;
 struct lc_aead_impl;
 
 struct lc_auth_ctx;
@@ -104,13 +105,17 @@ struct lc_xchacha20_params {
 /* AEAD. */
 
 struct lc_chacha20_poly1305_params {
-	uint8_t	key[LC_CHACHA20_KEYLEN];
-	uint8_t	nonce[LC_CHACHA20_NONCELEN];
+	struct lc_auth_ctx	*auth;
+	struct lc_cipher_ctx	*cipher;
+	uint8_t			 key[LC_CHACHA20_KEYLEN];
+	uint8_t			 nonce[LC_CHACHA20_NONCELEN];
 };
 
 struct lc_xchacha20_poly1305_params {
-	uint8_t	key[LC_XCHACHA20_KEYLEN];
-	uint8_t	nonce[LC_XCHACHA20_NONCELEN];
+	struct lc_auth_ctx	*auth;
+	struct lc_cipher_ctx	*cipher;
+	uint8_t			 key[LC_XCHACHA20_KEYLEN];
+	uint8_t			 nonce[LC_XCHACHA20_NONCELEN];
 };
 
 /* KDF. */
@@ -200,10 +205,26 @@ const struct lc_cipher_impl	*lc_cipher_impl_xchacha20(void);
  * Authenticated encryption with additional data.
  */
 
-int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *, void *,
+
+int	lc_aead_seal_init(struct lc_aead_ctx *, void *);
+int	lc_aead_seal_update(struct lc_aead_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t, const uint8_t *, size_t);
+int	lc_aead_seal_final(struct lc_aead_ctx *, uint8_t *, size_t *, uint8_t *,
+	    size_t *);
+int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *,
+	    uint8_t *, size_t *, void *, const uint8_t *, size_t,
+	    const uint8_t *, size_t);
+int	lc_aead_open_init(struct lc_aead_ctx *, void *);
+int	lc_aead_open_update(struct lc_aead_ctx *, uint8_t *, size_t *,
+	    const uint8_t *, size_t, const uint8_t *, size_t);
+int	lc_aead_open_final(struct lc_aead_ctx *, uint8_t *, size_t *,
+	    const uint8_t *, size_t);
 int	lc_aead_open(const struct lc_aead_impl *, uint8_t *, size_t *, void *,
-	    const uint8_t *, size_t, const uint8_t *, size_t);
+	    const uint8_t *, size_t, const uint8_t *, size_t, const uint8_t *,
+	    size_t);
+
+struct lc_aead_ctx	*lc_aead_ctx_new(const struct lc_aead_impl *);
+void			 lc_aead_ctx_free(struct lc_aead_ctx *);
 
 const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
 const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
