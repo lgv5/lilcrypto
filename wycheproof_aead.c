@@ -268,24 +268,26 @@ static int
 aead_poly1305_runner(const struct lc_aead_impl *impl, const struct testcase *c,
     void *params, int verbose)
 {
-	uint8_t	*buf, *encout, *decout;
-	size_t	 aeadlen, encoutlen, decoutlen;
+	uint8_t	*encout, *decout, *tag;
+	size_t	 encoutlen, decoutlen, taglen;
 
-	if (!lc_aead_seal(impl, NULL, &encoutlen, params, c->aad, c->aadlen,
-	    c->msg, c->msglen))
+	if (!lc_aead_seal(impl, NULL, &encoutlen, NULL, &taglen, params,
+	    c->aad, c->aadlen, c->msg, c->msglen))
 		return 0;
 	encout = malloc(encoutlen);
-	if (encout == NULL)
+	tag = malloc(taglen);
+	if (encout == NULL || tag == NULL)
 		err(1, "out of memory");
-	if (!lc_aead_seal(impl, encout, &encoutlen, params, c->aad, c->aadlen,
-	    c->msg, c->msglen))
+
+	if (!lc_aead_seal(impl, encout, &encoutlen, tag, &taglen, params,
+	    c->aad, c->aadlen, c->msg, c->msglen))
 		return 0;
 
-	if (c->ctlen != encoutlen - LC_POLY1305_TAGLEN ||
+	if (c->ctlen != encoutlen ||
 	    !lc_ct_cmp(encout, c->ct, c->ctlen)) {
 		if (verbose) {
 			fprintf(stderr, "ct (%zu, %zu)\n", c->ctlen,
-			    encoutlen - LC_POLY1305_TAGLEN);
+			    encoutlen);
 			lc_hexdump_fp(stderr, c->msg, c->msglen);
 			fprintf(stderr, "\n");
 			lc_hexdump_fp(stderr, c->ct, c->ctlen);
@@ -297,36 +299,27 @@ aead_poly1305_runner(const struct lc_aead_impl *impl, const struct testcase *c,
 		return 0;
 	}
 	if (c->taglenarg != LC_POLY1305_TAGLEN ||
-	    !lc_ct_cmp(encout + c->ctlen, c->tag, LC_POLY1305_TAGLEN)) {
+	    !lc_ct_cmp(tag, c->tag, LC_POLY1305_TAGLEN)) {
 		if (verbose) {
 			fprintf(stderr, "tag (%zu, %zu)\n", c->taglenarg,
 			    (size_t)LC_POLY1305_TAGLEN);
 			lc_hexdump_fp(stderr, c->tag, c->taglen);
 			fprintf(stderr, "\n");
-			lc_hexdump_fp(stderr, encout + c->ctlen,
-			    LC_POLY1305_TAGLEN);
+			lc_hexdump_fp(stderr, tag, LC_POLY1305_TAGLEN);
 			fprintf(stderr, "\n");
 		}
 		return 0;
 	}
 
 	/* Decryption. */
-
-	aeadlen = c->msglen + c->taglen;
-	buf = malloc(aeadlen);
-	if (buf == NULL)
-		err(1, "out of memory");
-	memcpy(buf, c->ct, c->ctlen);
-	memcpy(buf + c->ctlen, c->tag, c->taglen);
-
-	if (!lc_aead_open(impl, NULL, &decoutlen, params, c->aad, c->aadlen,
-	    buf, aeadlen))
+	if (!lc_aead_open(impl, NULL, &decoutlen, params, c->tag, c->taglen,
+	    c->aad, c->aadlen, c->ct, c->ctlen))
 		return 0;
 	decout = malloc(decoutlen);
 	if (decout == NULL)
 		err(1, "out of memory");
-	if (!lc_aead_open(impl, decout, &decoutlen, params, c->aad, c->aadlen,
-	    buf, aeadlen))
+	if (!lc_aead_open(impl, decout, &decoutlen, params, c->tag, c->taglen,
+	    c->aad, c->aadlen, c->ct, c->ctlen))
 		return 0;
 
 	if (c->msglen != decoutlen || !lc_ct_cmp(decout, c->msg, c->msglen)) {
@@ -362,6 +355,14 @@ chacha20_poly1305_runner(const struct testcase *c, int verbose)
 		return 0;
 	memcpy(params.nonce, c->iv, LC_CHACHA20_NONCELEN);
 
+	params.auth = lc_auth_ctx_new(lc_auth_impl_poly1305());
+	params.cipher = lc_cipher_ctx_new(lc_cipher_impl_chacha20());
+	if (params.auth == NULL || params.cipher == NULL) {
+		lc_auth_ctx_free(params.auth);
+		lc_cipher_ctx_free(params.cipher);
+		return 0;
+	}
+
 	return aead_poly1305_runner(lc_aead_impl_chacha20_poly1305(), c,
 	    &params, verbose);
 }
@@ -380,6 +381,14 @@ xchacha20_poly1305_runner(const struct testcase *c, int verbose)
 	    c->ivlen != LC_XCHACHA20_NONCELEN)
 		return 0;
 	memcpy(params.nonce, c->iv, LC_XCHACHA20_NONCELEN);
+
+	params.auth = lc_auth_ctx_new(lc_auth_impl_poly1305());
+	params.cipher = lc_cipher_ctx_new(lc_cipher_impl_xchacha20());
+	if (params.auth == NULL || params.cipher == NULL) {
+		lc_auth_ctx_free(params.auth);
+		lc_cipher_ctx_free(params.cipher);
+		return 0;
+	}
 
 	return aead_poly1305_runner(lc_aead_impl_xchacha20_poly1305(), c,
 	    &params, verbose);
