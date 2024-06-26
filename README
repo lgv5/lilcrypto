@@ -16,6 +16,7 @@ Utilities
 
 - Constant-time operations
   - [x] compare
+  - [x] mask32: return a 1s mask if any bit is set, 0 otherwise
 - Hexdump
 
 Hash

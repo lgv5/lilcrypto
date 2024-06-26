@@ -137,6 +137,7 @@ struct lc_hkdf_params {
  */
 
 uint32_t	lc_ct_cmp(const uint8_t *, const uint8_t *, size_t);
+uint32_t	lc_ct_mask32(uint32_t);
 
 
 /*

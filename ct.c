@@ -25,10 +25,18 @@ lc_ct_cmp(const uint8_t *x, const uint8_t *y, size_t l)
 	for (; l > 0; l--)
 		r |= *x++ ^ *y++;
 
-	/* Ensures that if any bit is set, then LSB is set. */
-	r |= r >> 4;
-	r |= r >> 2;
-	r |= r >> 1;
+	return lc_ct_mask32(r);
+}
 
-	return 0xffffffff + (r & 1);
+uint32_t
+lc_ct_mask32(uint32_t x)
+{
+	/* Ensures that if any bit is set, then LSB is set. */
+	x |= x >> 16;
+	x |= x >> 8;
+	x |= x >> 4;
+	x |= x >> 2;
+	x |= x >> 1;
+
+	return UINT32_MAX + (x & 1);
 }
