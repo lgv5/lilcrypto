@@ -23,10 +23,29 @@
 
 
 /*
- * Constants.
+ * CONSTANTS
  */
 
-/* Hashes. */
+
+/* Authentitcation */
+
+#define LC_POLY1305_BLOCKLEN	16
+#define LC_POLY1305_KEYLEN	32
+#define LC_POLY1305_TAGLEN	16
+
+
+/* Ciphers */
+
+#define LC_CHACHA20_BLOCKLEN	64
+#define LC_CHACHA20_KEYLEN	32
+#define LC_CHACHA20_NONCELEN	12
+#define LC_XCHACHA20_BLOCKLEN	64
+#define LC_XCHACHA20_KEYLEN	32
+#define LC_XCHACHA20_NONCELEN	24
+
+
+/* Hashes */
+
 #define LC_SHA224_BLOCKLEN	64
 #define LC_SHA224_HASHLEN	28
 #define LC_SHA256_BLOCKLEN	64
@@ -40,23 +59,11 @@
 #define LC_SHA512_256_BLOCKLEN	128
 #define LC_SHA512_256_HASHLEN	32
 
-/* Authentitcation. */
-#define LC_POLY1305_BLOCKLEN	16
-#define LC_POLY1305_KEYLEN	32
-#define LC_POLY1305_TAGLEN	16
-
-/* Ciphers. */
-#define LC_CHACHA20_BLOCKLEN	64
-#define LC_CHACHA20_KEYLEN	32
-#define LC_CHACHA20_NONCELEN	12
-#define LC_XCHACHA20_BLOCKLEN	64
-#define LC_XCHACHA20_KEYLEN	32
-#define LC_XCHACHA20_NONCELEN	24
-
 
 /*
- * Structs.
+ * STRUCTS
  */
+
 
 struct lc_aead_ctx;
 struct lc_aead_impl;
@@ -72,37 +79,8 @@ struct lc_hash_impl;
 
 struct lc_kdf_impl;
 
-/*
- * Parameters.
- */
 
-/* Authentication. */
-
-struct lc_hmac_params {
-	struct lc_hash_ctx	*hash;
-	size_t			 keylen;
-	uint8_t			*key;
-};
-
-struct lc_poly1305_params {
-	uint8_t	key[LC_POLY1305_KEYLEN];
-};
-
-/* Ciphers. */
-
-struct lc_chacha20_params {
-	uint8_t		key[LC_CHACHA20_KEYLEN];
-	uint8_t		nonce[LC_CHACHA20_NONCELEN];
-	uint32_t	counter;
-};
-
-struct lc_xchacha20_params {
-	uint8_t		key[LC_XCHACHA20_KEYLEN];
-	uint8_t		nonce[LC_XCHACHA20_NONCELEN];
-	uint32_t	counter;
-};
-
-/* AEAD. */
+/* AEAD parameters */
 
 struct lc_chacha20_poly1305_params {
 	struct lc_auth_ctx	*auth;
@@ -118,7 +96,36 @@ struct lc_xchacha20_poly1305_params {
 	uint8_t			 nonce[LC_XCHACHA20_NONCELEN];
 };
 
-/* KDF. */
+
+/* Authentication parameters */
+
+struct lc_hmac_params {
+	struct lc_hash_ctx	*hash;
+	size_t			 keylen;
+	uint8_t			*key;
+};
+
+struct lc_poly1305_params {
+	uint8_t	key[LC_POLY1305_KEYLEN];
+};
+
+
+/* Ciphers parameters */
+
+struct lc_chacha20_params {
+	uint8_t		key[LC_CHACHA20_KEYLEN];
+	uint8_t		nonce[LC_CHACHA20_NONCELEN];
+	uint32_t	counter;
+};
+
+struct lc_xchacha20_params {
+	uint8_t		key[LC_XCHACHA20_KEYLEN];
+	uint8_t		nonce[LC_XCHACHA20_NONCELEN];
+	uint32_t	counter;
+};
+
+
+/* KDF parameters */
 
 struct lc_hkdf_params {
 	struct lc_hash_ctx	*hash;
@@ -133,16 +140,17 @@ struct lc_hkdf_params {
 
 
 /*
- * Constant-time operations.
+ * PROTOTYPES
  */
+
+
+/* Constant-time operations */
 
 uint32_t	lc_ct_cmp(const uint8_t *, const uint8_t *, size_t);
 uint32_t	lc_ct_mask32(uint32_t);
 
 
-/*
- * Hashes.
- */
+/* Hashes */
 
 int	lc_hash_init(struct lc_hash_ctx *);
 int	lc_hash_update(struct lc_hash_ctx *, const uint8_t *, size_t);
@@ -161,9 +169,7 @@ const struct lc_hash_impl	*lc_hash_impl_sha512_224(void);
 const struct lc_hash_impl	*lc_hash_impl_sha512_256(void);
 
 
-/*
- * Authentication.
- */
+/* Authentication */
 
 int	lc_auth_init(struct lc_auth_ctx *, void *);
 int	lc_auth_update(struct lc_auth_ctx *, const uint8_t *, size_t);
@@ -178,9 +184,7 @@ const struct lc_auth_impl	*lc_auth_impl_hmac(void);
 const struct lc_auth_impl	*lc_auth_impl_poly1305(void);
 
 
-/*
- * Ciphers.
- */
+/* Ciphers */
 
 int	lc_cipher_encrypt_init(struct lc_cipher_ctx *, void *);
 int	lc_cipher_encrypt_update(struct lc_cipher_ctx *, uint8_t *, size_t *,
@@ -202,16 +206,13 @@ const struct lc_cipher_impl	*lc_cipher_impl_chacha20(void);
 const struct lc_cipher_impl	*lc_cipher_impl_xchacha20(void);
 
 
-/*
- * Authenticated encryption with additional data.
- */
-
+/* Authenticated encryption with additional data */
 
 int	lc_aead_seal_init(struct lc_aead_ctx *, void *);
 int	lc_aead_seal_update(struct lc_aead_ctx *, uint8_t *, size_t *,
 	    const uint8_t *, size_t, const uint8_t *, size_t);
-int	lc_aead_seal_final(struct lc_aead_ctx *, uint8_t *, size_t *, uint8_t *,
-	    size_t *);
+int	lc_aead_seal_final(struct lc_aead_ctx *, uint8_t *, size_t *,
+	    uint8_t *, size_t *);
 int	lc_aead_seal(const struct lc_aead_impl *, uint8_t *, size_t *,
 	    uint8_t *, size_t *, void *, const uint8_t *, size_t,
 	    const uint8_t *, size_t);
@@ -231,9 +232,7 @@ const struct lc_aead_impl	*lc_aead_impl_chacha20_poly1305(void);
 const struct lc_aead_impl	*lc_aead_impl_xchacha20_poly1305(void);
 
 
-/*
- * Key derivation functions.
- */
+/* Key derivation functions */
 
 int	lc_kdf(const struct lc_kdf_impl *, uint8_t *, size_t *, void *,
 	    size_t);
@@ -241,11 +240,10 @@ int	lc_kdf(const struct lc_kdf_impl *, uint8_t *, size_t *, void *,
 const struct lc_kdf_impl	*lc_kdf_impl_hkdf(void);
 
 
-/*
- * Utilities.
- */
+/* Utilities */
 
 int	lc_hexdump_fp(FILE *, const void *, size_t);
 void	lc_scrub(void *, size_t);
+
 
 #endif /* LILCRYPTO_H */

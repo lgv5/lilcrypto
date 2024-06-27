@@ -24,14 +24,16 @@
  * CONSTANTS
  */
 
-/* Authentitcation. */
+
+/* Authentitcation */
 
 #define HMAC_BLOCKLEN_MAX	LC_SHA512_BLOCKLEN
 #define HMAC_HASHLEN_MAX	LC_SHA512_HASHLEN
 
 #define POLY1305_TAGLEN_WORDS	(LC_POLY1305_TAGLEN / sizeof(uint32_t))
 
-/* Ciphers. */
+
+/* Ciphers */
 
 #define CHACHA20_BLOCKLEN_WORDS	(LC_CHACHA20_BLOCKLEN / sizeof(uint32_t))
 #define CHACHA20_CTRMAX		4294967295	/* 2^32 - 1 */
@@ -39,7 +41,8 @@
 #define CHACHA20_NONCE_WORDS	4
 #define CHACHA20_ROUNDS		10
 
-/* Hashes. */
+
+/* Hashes */
 
 #define SHA256_BLOCKLEN_WORDS	(LC_SHA256_BLOCKLEN / sizeof(uint32_t))
 #define SHA256_ROUNDS		64
@@ -152,11 +155,13 @@ struct lc_hash_ctx {
 	void				*arg;
 };
 
+
 /*
  * *_state holds the internal state of the cryptographic algorithms.
  */
 
-/* AEAD. */
+
+/* AEAD */
 
 struct chacha20_poly1305_state {
 	struct lc_auth_ctx	*auth;
@@ -166,7 +171,8 @@ struct chacha20_poly1305_state {
 	int			 aaddone;
 };
 
-/* Authentication. */
+
+/* Authentication */
 
 struct hmac_state {
 	struct lc_hash_ctx	*hash;
@@ -183,7 +189,7 @@ struct poly1305_state {
 };
 
 
-/* Ciphers. */
+/* Ciphers */
 
 struct chacha20_state {
 	uint32_t	s[CHACHA20_BLOCKLEN_WORDS];
@@ -194,7 +200,7 @@ struct chacha20_state {
 };
 
 
-/* Hashes. */
+/* Hashes */
 
 struct sha256_state {
 	uint32_t	h0, h1, h2, h3, h4, h5, h6, h7;
@@ -211,25 +217,25 @@ struct sha512_state {
 };
 
 
-
 /*
  * PROTOTYPES
  */
 
-/* Authentitcation. */
+
+/* Authentitcation */
 
 void	poly1305_block(struct poly1305_state *, uint32_t);
 void	poly1305_reduce(struct poly1305_state *,
 	    uint32_t [POLY1305_TAGLEN_WORDS]);
 
 
-/* Ciphers. */
+/* Ciphers */
 
 void	chacha20_block(struct chacha20_state *);
 void	hchacha20_block(struct chacha20_state *);
 
 
-/* Hashes. */
+/* Hashes */
 
 void	sha256_block(struct sha256_state *);
 
