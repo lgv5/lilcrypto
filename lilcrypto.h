@@ -146,7 +146,7 @@ struct lc_hkdf_params {
 
 /* Constant-time operations */
 
-uint32_t	lc_ct_cmp(const uint8_t *, const uint8_t *, size_t);
+uint32_t	lc_ct_cmp(const void *, const void *, size_t);
 uint32_t	lc_ct_mask32(uint32_t);
 
 

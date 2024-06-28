@@ -18,10 +18,13 @@
 
 
 uint32_t
-lc_ct_cmp(const uint8_t *x, const uint8_t *y, size_t l)
+lc_ct_cmp(const void *px, const void *py, size_t l)
 {
-	uint32_t	r = 0;
+	const unsigned char	*x, *y;
+	unsigned char		 r = 0;
 
+	x = px;
+	y = py;
 	for (; l > 0; l--)
 		r |= *x++ ^ *y++;
 
