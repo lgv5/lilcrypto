@@ -129,17 +129,17 @@
  * h0 = 0x3fffff8
  *
  * To perform the final reduction modulo p, observe that each hn is bound by
- * 2^26, which means that h is bound by 2^130. Define minusp = 2^136 - p.
+ * 2^26, which means that h is bound by 2^130. Define minusp = 2^130 - p = 5.
  * - If h < p, minusp + h < 2^136.
  * - If h >= p, then h = p + k with k in {0,1,2,3,4}, and minusp + h =
- *   2^136 - p + p + k = 2^136 + k >= 2^136, and both minusp + h = k mod 2^136
+ *   2^130 - p + p + k = 2^130 + k >= 2^130, and both minusp + h = k mod 2^130
  *   and h = k mod p for all possible values of k.
  *
  * To avoid information leaking via side channels, define g = minusp + h, and
- * select g if bit 136 is set, h otherwise. In particular, define a 32-bit
- * mask = ~(g >> 136) + 1.
- * - If bit 136 of g is 1, mask = ~1 + 1 = 0xffffffff.
- * - If bit 136 of g is 0, mask = ~0 + 1 = 0.
+ * select g if bit 130 is set, h otherwise. In particular, define a 32-bit
+ * mask = ~(g >> 130) + 1.
+ * - If bit 130 of g is 1, mask = ~1 + 1 = 0xffffffff.
+ * - If bit 130 of g is 0, mask = ~0 + 1 = 0.
  * Then perform (h & ~mask) | (g & mask).
  */
 
@@ -220,9 +220,9 @@ poly1305_reduce(struct poly1305_state *state,
 	g1 = t1 + (g0 >> 32);
 	g2 = t2 + (g1 >> 32);
 	g3 = t3 + (g2 >> 32);
-	g4 = t4 + (g3 >> 32) + 252;
+	g4 = t4 + (g3 >> 32);
 
-	mask = ~(g4 >> 8) + 1;
+	mask = ~(g4 >> 2) + 1;
 
 	t0 = (t0 & ~mask) | (g0 & mask);
 	t1 = (t1 & ~mask) | (g1 & mask);
