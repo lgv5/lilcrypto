@@ -224,6 +224,11 @@ poly1305_reduce(struct poly1305_state *state,
 
 	mask = ~(g4 >> 2) + 1;
 
+	/*
+	 * In the case that t4 t3 t2 t1 t0 > 2^130 - 5, g0 thru g3 will
+	 * overflow 32 bits. Given that mask is 32-bits wide, AND-ing it here
+	 * will perform the required clamping.
+	 */
 	t0 = (t0 & ~mask) | (g0 & mask);
 	t1 = (t1 & ~mask) | (g1 & mask);
 	t2 = (t2 & ~mask) | (g2 & mask);
